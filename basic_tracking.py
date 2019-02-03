@@ -1,12 +1,11 @@
-import sys
-import os
-sys.path.append('/usr/local/lib/python2.7/site-packages')
-import cv2
-import pygame
-import numpy as np
-from pygame.locals import*
+#import sys
+#import os
+#sys.path.append('/usr/local/lib/python2.7/site-packages')
 import picamera
 import picamera.array 
+
+import cv2
+import numpy as np
 import time
 from img_base_class import *
 
@@ -34,7 +33,7 @@ def find_robot_position(image):
         MIN_AREA = 100
         largest_object_x = None
         largest_object_y = None
-        largest_object_area = None
+        largest_object_area = 0
         mask = cv2.inRange(image, CHANGE_THRESHOLD, 255)
         x, y, a, ctr = find_largest_contour(mask)
         if a > MIN_AREA and a > largest_object_area:
@@ -52,11 +51,11 @@ try:
         if i < PURGE:
           short_sleep(FRAME_TIME)
         elif i == PURGE:
-          print "finished stabilising, capturing baseline"
+          print ("finished stabilising, capturing baseline")
           frame_name = "baseline.jpg"
           BASELINE = frame
           cv2.imwrite(frame_name, frame)
-          print "baseline saved, running, capturing frames"
+          print ("baseline saved, running, capturing frames")
         else:
           frame_diff = cv2.absdiff(frame, BASELINE)
           abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
@@ -71,5 +70,5 @@ try:
           cv2.imwrite(frame_name, frame)
         i += 1
 
-except KeyboardInterrupt,SystemExit:
+except KeyboardInterrupt:
     cv2.destroyAllWindows()

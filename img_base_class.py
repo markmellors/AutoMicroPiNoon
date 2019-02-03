@@ -7,12 +7,12 @@ import logging
 import logging.config
 import os
 import time
-import sys
-sys.path.append('/usr/local/lib/python2.7/site-packages')
+#import sys
+#sys.path.append('/usr/local/lib/python2.7/site-packages')
 
 import threading
-import pygame
-from pygame.locals import*
+#import pygame
+#from pygame.locals import*
 import picamera
 import picamera.array
 import cv2
