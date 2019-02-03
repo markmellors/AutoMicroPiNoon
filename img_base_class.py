@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # coding: Latin
 
@@ -18,6 +19,7 @@ import picamera.array
 import cv2
 import numpy
 from fractions import Fraction
+from math import atan2, cos, sin, sqrt, pi
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -127,3 +129,33 @@ def marker_vector(corners):
     x_diff = x_mid_top - x_mid_bottom
     y_diff = y_mid_top - y_mid_bottom
     return x_diff, y_diff
+
+def getOrientation(pts, img):
+    ## [pca]
+    # Construct a buffer used by the pca analysis
+    sz = len(pts)
+    data_pts = numpy.empty((sz, 2), dtype=numpy.float64)
+    for i in range(data_pts.shape[0]):
+        data_pts[i,0] = pts[i,0,0]
+        data_pts[i,1] = pts[i,0,1]
+
+    # Perform PCA analysis
+    mean = numpy.empty((0))
+    mean, eigenvectors, eigenvalues = cv2.PCACompute2(data_pts, mean)
+
+    # Store the center of the object
+    cntr = (int(mean[0,0]), int(mean[0,1]))
+    ## [pca]
+
+    ## [visualization]
+    # Draw the principal components
+#    cv2.circle(img, cntr, 3, (255, 0, 255), 2)
+#    p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
+#    p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
+#    drawAxis(img, cntr, p1, (0, 255, 0), 1)
+#    drawAxis(img, cntr, p2, (255, 255, 0), 5)
+
+    angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
+    ## [visualization]
+
+    return angle

@@ -34,13 +34,15 @@ def find_robot_position(image):
         largest_object_x = None
         largest_object_y = None
         largest_object_area = 0
+        largest_object_angle = None
         mask = cv2.inRange(image, CHANGE_THRESHOLD, 255)
         x, y, a, ctr = find_largest_contour(mask)
         if a > MIN_AREA and a > largest_object_area:
             largest_object_x = x
             largest_object_y = y
             largest_object_area = a
-        return largest_object_x, largest_object_y, largest_object_area
+            largest_object_angle = getOrientation(ctr,image)
+        return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
         if time.clock() > END_TIME:
@@ -59,11 +61,11 @@ try:
         else:
           frame_diff = cv2.absdiff(frame, BASELINE)
           abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
-          x, y, a = find_robot_position (abs_diff)
+          x, y, a, angle = find_robot_position (abs_diff)
           frame_name = str(i) + ".jpg"
           diff_name = str(i) + "diff.jpg"
           if a:
-            print ("object found, x: %s,  y: %s, area: %s" % (x , y, a))
+            print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
             frame_name = str(i) + "F.jpg"
             diff_name = str(i) + "diffF.jpg"
           cv2.imwrite(diff_name, frame_diff)
