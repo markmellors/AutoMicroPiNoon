@@ -2,6 +2,7 @@
 from bluetooth import *
 import sys
 import os
+sys.path.insert(0, '/home/pi/.local/lib/python3.5/site-packages')
 from approxeng.input.selectbinder import ControllerResource
 from time import sleep
 
