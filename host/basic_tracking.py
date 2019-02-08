@@ -41,9 +41,9 @@ def find_robot_position(image, abs_diff):
         largest_object_x = x
         largest_object_y = y
         largest_object_area = a
-        largest_object_angle = getOrientation(ctr, abs_diff)
         balloon, led, p1, p2 = find_markers(image, ctr)
-        cv2.arrowedLine(image, balloon, led, (255, 0, 255), 3)
+        largest_object_angle = atan2(balloon[1] - led[1], balloon[0] - led[0])
+        cv2.arrowedLine(image, balloon, led, (255, 0, 255), 3, tipLength=0.3)
         cv2.rectangle(image, p1, p2, (0, 255, 0), 1)
         ball_img_name = str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
