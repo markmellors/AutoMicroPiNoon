@@ -22,7 +22,24 @@ advertise_service( server_sock, "SampleServer",
                    profiles = [ SERIAL_PORT_PROFILE ], 
 #                   protocols = [ OBEX_UUID ] 
                     )
-                   
+#explorer output pin mapping to RGB led legs                   
+BLUE_PIN = 2
+RED_PIN = 0
+GREEN_PIN = 1
+
+#brightness (0-100) mapping for different colours
+BLUE = [0, 0, 100]
+RED = [100, 0, 0]
+GREEN = [0, 100, 0]
+CYAN = [0, 100, 100]
+MAGENTA = [100, 0, 100]
+YELLOW = [100, 40, 0]
+
+colour = MAGENTA
+explorerhat.output[RED_PIN].brightness(colour[0])
+explorerhat.output[GREEN_PIN].brightness(colour[1])
+explorerhat.output[BLUE_PIN].brightness(colour[2])
+
 print "Waiting for connection on RFCOMM channel %d" % port
 
 client_sock, client_info = server_sock.accept()
