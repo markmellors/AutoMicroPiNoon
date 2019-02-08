@@ -17,7 +17,7 @@ camera.iso = 800
 video = picamera.array.PiRGBArray(camera)
 i = 0
 PURGE = 50
-TIME_OUT = 15
+TIME_OUT = 5
 END_TIME = time.clock() + TIME_OUT
 #create small cust dictionary
 
@@ -42,9 +42,9 @@ def find_robot_position(image, abs_diff):
         largest_object_y = y
         largest_object_area = a
         largest_object_angle = getOrientation(ctr, abs_diff)
-        balloon_x, balloon_y, x_min, x_max, y_min, y_max = find_balloon(image, ctr)
-        cv2.circle(image, (balloon_x, balloon_y), 3, (255, 0, 0), 1)
-        cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 1)
+        balloon, p1, p2 = find_balloon(image, ctr)
+        cv2.circle(image, (balloon), 3, (255, 0, 0), 1)
+        cv2.rectangle(image, p1, p2, (0, 255, 0), 1)
         ball_img_name = str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
     return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
@@ -60,7 +60,7 @@ def find_balloon(image, contour):
      V_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
      minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(V_blurred)
      x, y = minLoc
-     return x + x_offset, y + y_offset, x_offset, x_max, y_offset, y_max
+     return (x + x_offset, y + y_offset), (x_offset, y_offset), (x_max, y_max)
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
         if time.clock() > END_TIME:
