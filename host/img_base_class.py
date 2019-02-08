@@ -39,8 +39,8 @@ def crop_to_contour(image, contour):
     x, y, w, h = cv2.boundingRect(contour)
     crop_x_max = x + w
     crop_y_max = y + h
-    image = image[x:crop_x_max,y:crop_Y_max]
-    return image, x, y
+    cropped_image = image[y:crop_y_max, x:crop_x_max]
+    return cropped_image, x, y, crop_x_max, crop_y_max
 
 def find_largest_contour(image):
     '''takes a binary image and returns coordinates, size and contourobject of largest contour'''
