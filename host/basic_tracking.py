@@ -53,9 +53,19 @@ def find_balloon(image, contour):
      cropped_image, x_offset, y_offset, x_max, y_max = crop_to_contour(image, contour)
      HSV_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2HSV)
      H_crop, S_crop, V_crop = cv2.split(HSV_image)
-     S_blurred = cv2.medianBlur(S_crop, 5)
-     minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(S_blurred)
-     x, y = maxLoc
+     V_edges = cv2.Canny(V_crop,100,200)
+     mask = numpy.full(V_edges.shape[:2], 255, dtype="uint8")
+     cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset))
+     mask_img_name = str(i) + "mask.jpg"
+     cv2.imwrite(mask_img_name, mask)
+     masked_edges = cv2.add(mask, V_edges)
+     edges_img_name = str(i) + "edges.jpg"
+     cv2.imwrite(edges_img_name, masked_edges)
+     V_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
+     blur_img_name = str(i) + "blur.jpg"
+     cv2.imwrite(blur_img_name, V_blurred)
+     minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(V_blurred)
+     x, y = minLoc
      return x + x_offset, y + y_offset, x_offset, x_max, y_offset, y_max
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
