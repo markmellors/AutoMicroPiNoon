@@ -30,7 +30,7 @@ def short_sleep(sleep_time):
 
 def find_robot_position(image, abs_diff):
     CHANGE_THRESHOLD = 10
-    MIN_AREA = 100
+    MIN_AREA = 400
     largest_object_x = None
     largest_object_y = None
     largest_object_area = 0
@@ -43,8 +43,7 @@ def find_robot_position(image, abs_diff):
         largest_object_area = a
         largest_object_angle = getOrientation(ctr, abs_diff)
         balloon, led, p1, p2 = find_markers(image, ctr)
-        cv2.circle(image, balloon, 3, (255, 0, 0), 1)
-        cv2.circle(image, led, 3, (0, 0, 255), 1)
+        cv2.arrowedLine(image, balloon, led, (255, 0, 255), 3)
         cv2.rectangle(image, p1, p2, (0, 255, 0), 1)
         ball_img_name = str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
