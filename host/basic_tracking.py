@@ -17,7 +17,7 @@ camera.iso = 800
 video = picamera.array.PiRGBArray(camera)
 i = 0
 PURGE = 50
-TIME_OUT = 5
+TIME_OUT = 10
 END_TIME = time.clock() + TIME_OUT
 #create small cust dictionary
 
@@ -29,7 +29,7 @@ def short_sleep(sleep_time):
     pass
 
 def find_robot_position(image, abs_diff):
-    CHANGE_THRESHOLD = 20
+    CHANGE_THRESHOLD = 10
     MIN_AREA = 100
     largest_object_x = None
     largest_object_y = None
@@ -42,14 +42,15 @@ def find_robot_position(image, abs_diff):
         largest_object_y = y
         largest_object_area = a
         largest_object_angle = getOrientation(ctr, abs_diff)
-        balloon, p1, p2 = find_balloon(image, ctr)
-        cv2.circle(image, (balloon), 3, (255, 0, 0), 1)
+        balloon, led, p1, p2 = find_markers(image, ctr)
+        cv2.circle(image, balloon, 3, (255, 0, 0), 1)
+        cv2.circle(image, led, 3, (0, 0, 255), 1)
         cv2.rectangle(image, p1, p2, (0, 255, 0), 1)
         ball_img_name = str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
     return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
 
-def find_balloon(image, contour):
+def find_markers(image, contour):
      cropped_image, x_offset, y_offset, x_max, y_max = crop_to_contour(image, contour)
      HSV_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2HSV)
      H_crop, S_crop, V_crop = cv2.split(HSV_image)
@@ -57,10 +58,13 @@ def find_balloon(image, contour):
      mask = numpy.full(V_edges.shape[:2], 255, dtype="uint8")
      cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset))
      masked_edges = cv2.add(mask, V_edges)
-     V_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
+     edges_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
+     minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(edges_blurred)
+     balloon_x, balloon_y = minLoc
+     V_blurred = cv2.GaussianBlur(V_crop, (5, 5), 0)
      minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(V_blurred)
-     x, y = minLoc
-     return (x + x_offset, y + y_offset), (x_offset, y_offset), (x_max, y_max)
+     led_x, led_y = maxLoc
+     return (balloon_x + x_offset, balloon_y + y_offset), (led_x + x_offset, led_y + y_offset), (x_offset, y_offset), (x_max, y_max)
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
         if time.clock() > END_TIME:
