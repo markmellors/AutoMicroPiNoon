@@ -29,20 +29,23 @@ def short_sleep(sleep_time):
     pass
 
 def find_robot_position(image):
-        CHANGE_THRESHOLD = 30
-        MIN_AREA = 100
-        largest_object_x = None
-        largest_object_y = None
-        largest_object_area = 0
-        largest_object_angle = None
-        mask = cv2.inRange(image, CHANGE_THRESHOLD, 255)
-        x, y, a, ctr = find_largest_contour(mask)
-        if a > MIN_AREA and a > largest_object_area:
-            largest_object_x = x
-            largest_object_y = y
-            largest_object_area = a
-            largest_object_angle = getOrientation(ctr,image)
-        return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
+    CHANGE_THRESHOLD = 30
+    MIN_AREA = 100
+    largest_object_x = None
+    largest_object_y = None
+    largest_object_area = 0
+    largest_object_angle = None
+    mask = cv2.inRange(image, CHANGE_THRESHOLD, 255)
+    x, y, a, ctr = find_largest_contour(mask)
+    if a > MIN_AREA and a > largest_object_area:
+        largest_object_x = x
+        largest_object_y = y
+        largest_object_area = a
+        largest_object_angle = getOrientation(ctr,image)
+    return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
+
+def find_balloon(image):
+     return 0
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
         if time.clock() > END_TIME:

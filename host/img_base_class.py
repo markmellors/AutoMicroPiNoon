@@ -35,25 +35,32 @@ def threshold_image(image, limits):
         )
         return mask
 
+def crop_to_contour(image, contour):
+    x, y, w, h = cv2.boundingRect(contour)
+    crop_x_max = x + w
+    crop_y_max = y + h
+    image = image[x:crop_x_max,y:crop_Y_max]
+    return image, x, y
+
 def find_largest_contour(image):
-        '''takes a binary image and returns coordinates, size and contourobject of largest contour'''
-        contourimage, contours, hierarchy = cv2.findContours(
-            image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
-        )
-        # Go through each contour
-        found_area = 1
-        found_x = -1
-        found_y = -1
-        biggest_contour = None
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if found_area < area:
-                found_area = area
-                m = cv2.moments(contour)
-                found_x = int(m['m10']/m['m00'])
-                found_y = int(m['m01']/m['m00'])
-                biggest_contour = contour
-        return found_x, found_y, found_area, biggest_contour
+    '''takes a binary image and returns coordinates, size and contourobject of largest contour'''
+    contourimage, contours, hierarchy = cv2.findContours(
+        image, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+    )
+    # Go through each contour
+    found_area = 1
+    found_x = -1
+    found_y = -1
+    biggest_contour = None
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if found_area < area:
+            found_area = area
+            m = cv2.moments(contour)
+            found_x = int(m['m10']/m['m00'])
+            found_y = int(m['m01']/m['m00'])
+            biggest_contour = contour
+    return found_x, found_y, found_area, biggest_contour
 
 def colour_of_contour(image, contour):
     '''Returns the mean of each channel of a given contour in an image'''
