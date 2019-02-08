@@ -17,7 +17,7 @@ camera.iso = 800
 video = picamera.array.PiRGBArray(camera)
 i = 0
 PURGE = 50
-TIME_OUT = 5
+TIME_OUT = 15
 END_TIME = time.clock() + TIME_OUT
 #create small cust dictionary
 
@@ -29,7 +29,7 @@ def short_sleep(sleep_time):
     pass
 
 def find_robot_position(image, abs_diff):
-    CHANGE_THRESHOLD = 30
+    CHANGE_THRESHOLD = 20
     MIN_AREA = 100
     largest_object_x = None
     largest_object_y = None
@@ -56,14 +56,8 @@ def find_balloon(image, contour):
      V_edges = cv2.Canny(V_crop,100,200)
      mask = numpy.full(V_edges.shape[:2], 255, dtype="uint8")
      cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset))
-     mask_img_name = str(i) + "mask.jpg"
-     cv2.imwrite(mask_img_name, mask)
      masked_edges = cv2.add(mask, V_edges)
-     edges_img_name = str(i) + "edges.jpg"
-     cv2.imwrite(edges_img_name, masked_edges)
      V_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
-     blur_img_name = str(i) + "blur.jpg"
-     cv2.imwrite(blur_img_name, V_blurred)
      minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(V_blurred)
      x, y = minLoc
      return x + x_offset, y + y_offset, x_offset, x_max, y_offset, y_max
@@ -93,8 +87,9 @@ try:
             print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
             frame_name = str(i) + "F.jpg"
             diff_name = str(i) + "diffF.jpg"
+          else:
+              cv2.imwrite(frame_name, frame)
           cv2.imwrite(diff_name, frame_diff)
-          cv2.imwrite(frame_name, frame)
         i += 1
 
 except KeyboardInterrupt:
