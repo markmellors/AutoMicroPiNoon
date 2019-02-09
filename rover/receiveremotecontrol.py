@@ -39,7 +39,7 @@ try:
         if len(values) != 2:
             print "data length is %d - skipping" % len(values)
             continue
-        motor_one,  motor_two = [int(i) for i in data.split(",")]
+        motor_one,  motor_two = [float(f) for f in data.split(",")]
         explorerhat.motor.one.speed(motor_one)
         explorerhat.motor.two.speed(motor_two)
 except IOError:
