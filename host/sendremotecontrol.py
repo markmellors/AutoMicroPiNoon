@@ -4,7 +4,7 @@ import sys
 import os
 from approxeng.input.selectbinder import ControllerResource
 from time import sleep
-
+import math
 addr = "B8:27:EB:51:3C:F9"
 
 if len(sys.argv) < 2:
@@ -66,25 +66,29 @@ class RobotStopException(Exception):
     pass
 
 
-def mixer(yaw, throttle, max_power=100):
-    """
-    Mix a pair of joystick axes, returning a pair of wheel speeds. This is where the mapping from
-    joystick positions to wheel powers is defined, so any changes to how the robot drives should
-    be made here, everything else is really just plumbing.
-    
-    :param yaw: 
-        Yaw axis value, ranges from -1.0 to 1.0
-    :param throttle: 
-        Throttle axis value, ranges from -1.0 to 1.0
-    :param max_power: 
-        Maximum speed that should be returned from the mixer, defaults to 100
-    :return: 
-        A pair of power_left, power_right integer values to send to the motor driver
-    """
-    left = throttle + yaw
-    right = throttle - yaw
-    scale = float(max_power) / max(1, abs(left), abs(right))
-    return int(left * scale), int(right * scale)
+def steering(x, y):
+    """Steering algorithm taken from
+    https://electronics.stackexchange.com/a/293108"""
+    # convert to polar
+    r = math.hypot(x, y)
+    t = math.atan2(y, x)
+
+    # rotate by 45 degrees
+    t += math.pi / 4
+
+    # back to cartesian
+    left = r * math.cos(t)
+    right = r * math.sin(t)
+
+    # rescale the new coords
+    left = left * math.sqrt(2)
+    right = right * math.sqrt(2)
+
+    # clamp to -1/+1
+    left = 100 * max(-1, min(left, 1))
+    right = 100* max(-1, min(right, 1))
+
+    return left, right
 
 
 # Outer try / except catches the RobotStopException we just defined, which we'll raise when we want to
@@ -97,27 +101,16 @@ try:
             # Bind to any available joystick, this will use whatever's connected as long as the library
             # supports it.
             with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
-                print('Controller found, press HOME button to exit, use left stick to drive.')
-                print(joystick.controls)
+                print('Controller found, use right stick to drive.')
                 # Loop until the joystick disconnects, or we deliberately stop by raising a
                 # RobotStopException
                 while joystick.connected:
                     # Get joystick values from the left analogue stick
-                    x_axis, y_axis = joystick['lx', 'ly']
+                    x_axis, y_axis = joystick['rx', 'ry']
                     # Get power from mixer function
-                    power_left, power_right = mixer(yaw=x_axis, throttle=y_axis)
+                    power_left, power_right = steering(x_axis, y_axis)
                     # Set motor speeds
                     set_speeds(power_left, power_right)
-                    # Get a ButtonPresses object containing everything that was pressed since the last
-                    # time around this loop.
-                    joystick.check_presses()
-                    # Print out any buttons that were pressed, if we had any
-                    if joystick.has_presses:
-                        print(joystick.presses)
-                    # If home was pressed, raise a RobotStopException to bail out of the loop
-                    # Home is generally the PS button for playstation controllers, XBox for XBox etc
-                    if 'home' in joystick.presses:
-                        raise RobotStopException()
         except IOError:
             # We get an IOError when using the ControllerResource if we don't have a controller yet,
             # so in this case we just wait a second and try again after printing a message.
