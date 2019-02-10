@@ -5,6 +5,8 @@ import os
 from approxeng.input.selectbinder import ControllerResource
 from time import sleep
 import math
+import struct
+import binascii
 addr = "B8:27:EB:51:3C:F9"
 
 #if len(sys.argv) < 2:
@@ -44,8 +46,11 @@ def set_speeds(power_left, power_right):
     :param power_right: 
         Power to send to right motor, will be inverted to reflect chassis layout
     """
-    data = "{0},{1}".format(power_left,power_right)
-    sock.send(data)
+#    data = "{0},{1}".format(power_left,power_right)
+    data = (power_left, power_right)
+    s = struct.Struct('2f')
+    packed_data = s.pack(*data)
+    sock.send(packed_data)
     sleep(0.03)
 
 def stop_motors():
