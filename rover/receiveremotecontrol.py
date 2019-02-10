@@ -30,29 +30,24 @@ print "Waiting for connection on RFCOMM channel %d" % port
 
 client_sock, client_info = server_sock.accept()
 print "Accepted connection from ", client_info
-t =[" " for x in range(10)]
-i = 0
 try:
     while True:
         data = client_sock.recv(1024)
         if len(data) == 0: 
             print "socket data length is %d" % len(data)
             continue
-#        print "%s: received [%s]" % (datetime.now(), data)
-        t[i] = str(datetime.now())
-        i += 1
-        if i>9:
-#            print t
-            i = 0
-#	values = data.split(",")
+        if len(data)>8:
+            firstbyte = len(data)-8
+            lastbyte = len(data)
+            data = data[firstbyte:lastbyte]
+            print "data collision, trying last 8 bytes"
         if len(data) != 8:
-            print "data length is %d - skipping" % len(values)
+            print "%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data))
             continue
         s = struct.Struct('2f')
  	values = s.unpack(data)
-        print values
+        print "%s: received [%s]" % (datetime.now(), values)
         motor_one,  motor_two = values
-#        motor_one,  motor_two = [float(f) for f in data.split(",")]
         explorerhat.motor.one.speed(motor_one)
         explorerhat.motor.two.speed(motor_two)
 except IOError:
