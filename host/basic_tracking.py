@@ -33,6 +33,8 @@ class Robot(object):
     angle = None
     led = None
     balloon = None
+    p1 = None
+    p2 = None
 
 class marker(object):
     def __init__(self, coordinate = None):
@@ -60,14 +62,14 @@ def find_robot_position(image, abs_diff):
     unknown_objects = find_objects(mask, MIN_AREA)
     print (len(unknown_objects))
     for ufo in unknown_objects:
-        ufo.balloon, ufo.led, p1, p2 = find_markers(image, ufo.contour)
+        ufo.balloon, ufo.led, ufo.p1, ufo.p2 = find_markers(image, ufo.contour)
     if len(unknown_objects)>0:
         largest_object_x = unknown_objects[0].x
         largest_object_y = unknown_objects[0].y
         largest_object_area = unknown_objects[0].area
         largest_object_angle = atan2(unknown_objects[0].balloon.y - unknown_objects[0].led.y, unknown_objects[0].balloon.x - unknown_objects[0].led.x)
         cv2.arrowedLine(image, (unknown_objects[0].balloon.x, unknown_objects[0].balloon.y), (unknown_objects[0].led.x, unknown_objects[0].led.y), (255, 0, 255), 3, tipLength=0.3)
-        cv2.rectangle(image, p1, p2, (0, 255, 0), 1)
+        cv2.rectangle(image, unknown_objects[0].p1, unknown_objects[0].p2, (0, 255, 0), 1)
         ball_img_name = str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
     return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
