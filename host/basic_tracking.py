@@ -7,6 +7,7 @@ import picamera.array
 import cv2
 import numpy as np
 import time
+import os
 from img_base_class import *
 
 camera = picamera.PiCamera()
@@ -20,6 +21,9 @@ i = 0
 PURGE = 50
 TIME_OUT = 10
 END_TIME = time.clock() + TIME_OUT
+
+file_path = os.path.dirname(os.path.realpath(__file__))
+file_path += "/images/"
 
 class Robot(object):
 #    angle = None
@@ -70,7 +74,7 @@ def find_robot_position(image, abs_diff):
         largest_object_angle = atan2(unknown_objects[0].balloon.y - unknown_objects[0].led.y, unknown_objects[0].balloon.x - unknown_objects[0].led.x)
         cv2.arrowedLine(image, (unknown_objects[0].balloon.x, unknown_objects[0].balloon.y), (unknown_objects[0].led.x, unknown_objects[0].led.y), (255, 0, 255), 3, tipLength=0.3)
         cv2.rectangle(image, unknown_objects[0].p1, unknown_objects[0].p2, (0, 255, 0), 1)
-        ball_img_name = str(i) + "balloon.jpg"
+        ball_img_name = file_path + str(i) + "balloon.jpg"
         cv2.imwrite(ball_img_name, image)
     return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
 
@@ -123,7 +127,7 @@ try:
           short_sleep(FRAME_TIME)
         elif i == PURGE:
           print ("finished stabilising, capturing baseline")
-          frame_name = "baseline.jpg"
+          frame_name = file_path + "baseline.jpg"
           BASELINE = frame
           cv2.imwrite(frame_name, frame)
           print ("baseline saved, running, capturing frames")
@@ -132,12 +136,12 @@ try:
           abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
           x, y, a, angle = find_robot_position (frame, abs_diff)
 
-          frame_name = str(i) + ".jpg"
-          diff_name = str(i) + "diff.jpg"
+          frame_name = file_path + str(i) + ".jpg"
+          diff_name = file_path + str(i) + "diff.jpg"
           if a:
             print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
-            frame_name = str(i) + "F.jpg"
-            diff_name = str(i) + "diffF.jpg"
+            frame_name = file_path + str(i) + "F.jpg"
+            diff_name = file_path + str(i) + "diffF.jpg"
           else:
               cv2.imwrite(frame_name, frame)
           cv2.imwrite(diff_name, frame_diff)
