@@ -123,6 +123,7 @@ try:
         frame = (frameBuf.array)
         video.truncate(0)
         # Our operations on the frame come here
+        frame = frame[0:210, 50:250]
         if i < PURGE:
           short_sleep(FRAME_TIME)
         elif i == PURGE:
