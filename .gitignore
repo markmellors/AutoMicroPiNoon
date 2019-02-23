@@ -1,3 +1,4 @@
+host/images/
 *.log
 *.pyc
 *.sublime-project

@@ -56,15 +56,16 @@ def short_sleep(sleep_time):
     pass
 
 def find_robot_position(image, abs_diff):
-    CHANGE_THRESHOLD = 10
+    CHANGE_THRESHOLD = 30
     MIN_AREA = 400
     largest_object_x = None
     largest_object_y = None
     largest_object_area = 0
     largest_object_angle = None
     mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
-    unknown_objects = find_objects(mask, MIN_AREA)
-    print (len(unknown_objects))
+    kernel = np.ones((3,3),np.uint8)
+    opening = cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernel)
+    unknown_objects = find_objects(opening, MIN_AREA)
     for ufo in unknown_objects:
         ufo.balloon, ufo.led, ufo.p1, ufo.p2 = find_markers(image, ufo.contour)
     if len(unknown_objects)>0:
@@ -140,7 +141,7 @@ try:
           frame_name = file_path + str(i) + ".jpg"
           diff_name = file_path + str(i) + "diff.jpg"
           if a:
-            print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
+#            print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
             frame_name = file_path + str(i) + "F.jpg"
             diff_name = file_path + str(i) + "diffF.jpg"
           else:
