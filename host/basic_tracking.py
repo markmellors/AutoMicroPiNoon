@@ -29,7 +29,7 @@ class Robot():
 #    angle = None
 #    led_HSV = None, None, None
 #    balloon_HSV = None, None, None
-    def __init__(self, x = None, y = None, area = None, contour = None):
+    def __init__(self, x = None, y = None, area = 0, contour = None):
         self.x = x
         self.y = y
         self.area = area
@@ -44,6 +44,8 @@ class Marker():
     def __init__(self, coordinate = None):
         if coordinate:
             self.x, self.y = coordinate
+        else:
+            self.x, self.y = None, None
     hsv = None
 
 robot_one = Robot()
@@ -60,7 +62,7 @@ def short_sleep(sleep_time):
 def find_robot_position(image, abs_diff):
     CHANGE_THRESHOLD = 30
     MIN_AREA = 400
-    largest_object = Robot(None, None, 0, None)
+    largest_object = Robot()
     mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
     MORPH_SIZE = 3
     kernel = np.ones((MORPH_SIZE,MORPH_SIZE),np.uint8) 
@@ -94,24 +96,26 @@ def find_objects(image, area_threshold):
     return objects
 
 def find_markers(image, contour):
+     #function to find the distinguishing feature of a robot contour (currently location of an LED and balloon) 
+     #and return the properties of those markers (as marker objects) along with the bounding box corners
      cropped_image, x_offset, y_offset, x_max, y_max = crop_to_contour(image, contour)
      hsv_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2HSV)
      h_crop, s_crop, v_crop = cv2.split(hsv_image)
      v_edges = cv2.Canny(v_crop,100,200) #100, 200 are unitless edge detection parameters not used elsewhere
-     mask = numpy.full(v_edges.shape[:2], 255, dtype="uint8")
-     cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset))
-     masked_edges = cv2.add(mask, v_edges)
+     mask = numpy.full(v_edges.shape[:2], 255, dtype="uint8") #full white mask
+     cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset)) #make region of contour black
+     masked_edges = cv2.add(mask, v_edges) #make region of contour equal to  the found edges
      EDGE_BLUR_SIZE = 21 #needs to be odd
-     edges_blurred = cv2.GaussianBlur(masked_edges, (EDGE_BLUR_SIZE,EDGE_BLUR_SIZE),0)
-     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(edges_blurred)
-     balloon = Marker(min_loc)
+     edges_blurred = cv2.GaussianBlur(masked_edges, (EDGE_BLUR_SIZE,EDGE_BLUR_SIZE),0) #smear edges around
+     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(edges_blurred) #find darkest and lightest spots.
+     balloon = Marker(min_loc) #balloon location assumed to be darkest region, ie. region within contour that is furthest from an edge.
      balloon.hsv = hsv_image[balloon.y, balloon.x]
      balloon.x += x_offset
      balloon.y += y_offset
      LED_BLUR_SIZE = 5 #must be odd
-     v_blurred = cv2.GaussianBlur(v_crop, (LED_BLUR_SIZE, LED_BLUR_SIZE), 0)
-     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(v_blurred)
-     led = Marker(max_loc)
+     v_blurred = cv2.GaussianBlur(v_crop, (LED_BLUR_SIZE, LED_BLUR_SIZE), 0) #blur value channel
+     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(v_blurred) #find brightest and darkest spots again
+     led = Marker(max_loc) # led assumed to be brightest spot within contour
      led.hsv = hsv_image[led.y, led.x]
      led.x += x_offset
      led.y += y_offset
@@ -142,12 +146,12 @@ try:
           abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
           robot = find_robot_position (frame, abs_diff)
 
-          frame_name = os.path.join(file_path, str(i), '.jpg')
-          diff_name = file_path + str(i) + "diff.jpg"
+          frame_name = os.path.join(file_path, str(i)+ '.jpg')
+          diff_name = os.path.join(file_path, str(i) + 'diff.jpg')
           if robot.area:
             print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (robot.x , robot.y, robot.area, robot.angle*60))
-            frame_name = os.path.join(file_path, str(i), 'F.jpg')
-            diff_name = os.path.join(file_path, str(i), 'diffF.jpg')
+            frame_name = os.path.join(file_path, str(i) + 'F.jpg')
+            diff_name = os.path.join(file_path, str(i) + 'diffF.jpg')
           else:
               cv2.imwrite(frame_name, frame)
           cv2.imwrite(diff_name, frame_diff)
