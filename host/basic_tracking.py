@@ -2,7 +2,7 @@
 #import os
 #sys.path.append('/usr/local/lib/python2.7/site-packages')
 import picamera
-import picamera.array 
+import picamera.array
 
 import cv2
 import numpy as np
@@ -22,8 +22,11 @@ PURGE = 50
 TIME_OUT = 10
 END_TIME = time.clock() + TIME_OUT
 
-file_path = os.path.dirname(os.path.realpath(__file__))
-file_path += "/images/"
+base_path = os.path.dirname(os.path.realpath(__file__))
+image_dir_path = os.path.join(base_path, "images")
+
+class VideoTimeExceeded(Exception):
+    pass
 
 class Robot(object):
 #    angle = None
@@ -40,7 +43,7 @@ class Robot(object):
     p1 = None
     p2 = None
 
-class marker(object):
+class Marker(object):
     def __init__(self, coordinate = None):
         self.x, self.y = coordinate
     HSV = None
@@ -69,13 +72,14 @@ def find_robot_position(image, abs_diff):
     for ufo in unknown_objects:
         ufo.balloon, ufo.led, ufo.p1, ufo.p2 = find_markers(image, ufo.contour)
     if len(unknown_objects)>0:
-        largest_object_x = unknown_objects[0].x
-        largest_object_y = unknown_objects[0].y
-        largest_object_area = unknown_objects[0].area
-        largest_object_angle = atan2(unknown_objects[0].balloon.y - unknown_objects[0].led.y, unknown_objects[0].balloon.x - unknown_objects[0].led.x)
-        cv2.arrowedLine(image, (unknown_objects[0].balloon.x, unknown_objects[0].balloon.y), (unknown_objects[0].led.x, unknown_objects[0].led.y), (255, 0, 255), 3, tipLength=0.3)
-        cv2.rectangle(image, unknown_objects[0].p1, unknown_objects[0].p2, (0, 255, 0), 1)
-        ball_img_name = file_path + str(i) + "balloon.jpg"
+        obj = unknown_objects[0]
+        largest_object_x = obj.x
+        largest_object_y = obj.y
+        largest_object_area = obj.area
+        largest_object_angle = atan2(obj.balloon.y - obj.led.y, obj.balloon.x - obj.led.x)
+        cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y), (obj.led.x, obj.led.y), (255, 0, 255), 3, tipLength=0.3)
+        cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
+        ball_img_name = os.path.join(image_dir_path, "{}balloon.jpg".format(i))
         cv2.imwrite(ball_img_name, image)
     return largest_object_x, largest_object_y, largest_object_area, largest_object_angle
 
@@ -103,15 +107,15 @@ def find_markers(image, contour):
      mask = numpy.full(V_edges.shape[:2], 255, dtype="uint8")
      cv2.drawContours(mask, [contour], -1, 0, -1, offset=(-x_offset, -y_offset))
      masked_edges = cv2.add(mask, V_edges)
-     edges_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)     
+     edges_blurred = cv2.GaussianBlur(masked_edges, (21,21),0)
      minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(edges_blurred)
-     balloon = marker(minLoc)
+     balloon = Marker(minLoc)
      balloon.HSV = HSV_image[balloon.y, balloon.x]
      balloon.x += x_offset
      balloon.y += y_offset
      V_blurred = cv2.GaussianBlur(V_crop, (5, 5), 0)
      minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(V_blurred)
-     led = marker(maxLoc)
+     led = Marker(maxLoc)
      led.HSV = HSV_image[led.y, led.x]
      led.x += x_offset
      led.y += y_offset
@@ -120,7 +124,7 @@ def find_markers(image, contour):
 try:
     for frameBuf in camera.capture_continuous(video, format ="rgb", use_video_port=True):
         if time.clock() > END_TIME:
-           raise KeyboardInterrupt
+           raise VideoTimeExceeded("Max time exceeded")
         frame = (frameBuf.array)
         video.truncate(0)
         # Our operations on the frame come here
@@ -129,7 +133,7 @@ try:
           short_sleep(FRAME_TIME)
         elif i == PURGE:
           print ("finished stabilising, capturing baseline")
-          frame_name = file_path + "baseline.jpg"
+          frame_name = os.path.join(image_dir_path,  "baseline.jpg")
           BASELINE = frame
           cv2.imwrite(frame_name, frame)
           print ("baseline saved, running, capturing frames")
@@ -138,16 +142,17 @@ try:
           abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
           x, y, a, angle = find_robot_position (frame, abs_diff)
 
-          frame_name = file_path + str(i) + ".jpg"
-          diff_name = file_path + str(i) + "diff.jpg"
+          frame_name = os.path.join(image_dir_path, "{}.jpg".format(i))
+          diff_name = os.path.join(image_dir_path, "{}diff.jpg".format(i))
           if a:
 #            print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (x , y, a, angle*60))
-            frame_name = file_path + str(i) + "F.jpg"
-            diff_name = file_path + str(i) + "diffF.jpg"
+            frame_name = os.path.join(image_dir_path, "{}F.jpg".format(i))
+            diff_name = os.path.join(image_dir_path, "{}diffF.jpg".format(i))
           else:
               cv2.imwrite(frame_name, frame)
           cv2.imwrite(diff_name, frame_diff)
         i += 1
 
-except KeyboardInterrupt:
+except (KeyboardInterrupt, VideoTimeExceeded) as exc:
+    print(exc)
     cv2.destroyAllWindows()
