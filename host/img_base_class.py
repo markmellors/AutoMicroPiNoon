@@ -137,7 +137,7 @@ def marker_vector(corners):
     y_diff = y_mid_top - y_mid_bottom
     return x_diff, y_diff
 
-def getOrientation(pts, img):
+def get_Orientation(pts, img):
     ## [pca]
     # Construct a buffer used by the pca analysis
     sz = len(pts)
@@ -152,17 +152,7 @@ def getOrientation(pts, img):
 
     # Store the center of the object
     cntr = (int(mean[0,0]), int(mean[0,1]))
-    ## [pca]
-
-    ## [visualization]
-    # Draw the principal components
-#    cv2.circle(img, cntr, 3, (255, 0, 255), 2)
-#    p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
-#    p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
-#    drawAxis(img, cntr, p1, (0, 255, 0), 1)
-#    drawAxis(img, cntr, p2, (255, 255, 0), 5)
-
     angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
-    ## [visualization]
+ 
 
     return angle
