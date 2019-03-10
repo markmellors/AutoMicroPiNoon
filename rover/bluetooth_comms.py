@@ -1,6 +1,6 @@
 from bluetooth import *
 from datetime import datetime
-from time
+import time
 import struct
 import binascii
 from enum import Enum
@@ -11,19 +11,14 @@ class Comms:
         self.server_sock=BluetoothSocket( RFCOMM )
         self.server_sock.bind(("",PORT_ANY))
         self.server_sock.listen(1)
-        advertise_service( self.server_sock, "SampleServer",
-                            service_id = uuid,
-                            service_classes = [ uuid, SERIAL_PORT_CLASS ],
-                            profiles = [ SERIAL_PORT_PROFILE ], 
-        #                   protocols = [ OBEX_UUID ] 
-                    )
+        port = self.server_sock.getsockname()[1]
+        self.uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
         self.TIME_OUT = 3
-        self.init_communciated_properties()
+        self.init_communicated_properties()
         self.connected = False
         self.last_signal = None
         self.terminated = False
-        #call establish connection
-        self.start()
+        self.connect()
 
     class State(Enum):
         #state enumeration
@@ -34,12 +29,12 @@ class Comms:
 
 
     def init_communicated_properties(self):
-        self.state = None
+        self._state = None
         self.state_colour_codes = {
-            State.AUTO: "RED",
-            State.OFFLINE: "BLUE",
-            State.RC: "GREEN",
-            State.STOPPED: "MAGENTA",
+            self.State.AUTO: "RED",
+            self.State.OFFLINE: "BLUE",
+            self.State.RC: "GREEN",
+            self.State.STOPPED: "MAGENTA",
         }
         self.colour = None
         self.motor_one = None
@@ -47,8 +42,8 @@ class Comms:
 
     def run(self):
         while not self.terminated:
-            if not self.connected
-                self.state = state.OFFLINE
+            if not self.connected:
+                self.state =self.State.OFFLINE
                 self.motor_one, self.motor_two = 0, 0    
                 self.connect()
             else:
@@ -57,39 +52,46 @@ class Comms:
                 self.connected = False
 
     def connect(self):
+        advertise_service( self.server_sock, "SampleServer",
+                           service_id = self.uuid,
+                           service_classes = [ self.uuid, SERIAL_PORT_CLASS ],
+                           profiles = [ SERIAL_PORT_PROFILE ], 
+        #                   protocols = [ OBEX_UUID ] 
+                            )
         self.client_sock, self.client_info = self.server_sock.accept()
 
     def get_latest_data(self):
         try:
             data = self.client_sock.recv(1024)
             if len(data) == 0: 
-                print "socket data length is %d" % len(data)
+                print ("socket data length is %d" % len(data))
                 self.last_signal = time.clock()
-                continue
             if len(data)>8:
                 firstbyte = len(data)-8
                 lastbyte = len(data)
                 data = data[firstbyte:lastbyte]
-                print "data collision, trying last 8 bytes"
+                print ("data collision, trying last 8 bytes")
             if len(data) != 8:
-                print "%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data))
-                continue
+                print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data)))
             s = struct.Struct('h2f')
             values = s.unpack(data)
-            print "%s: received [%s]" % (datetime.now(), values)
+            print ("%s: received [%s]" % (datetime.now(), values))
             self.state = values[0]
             self.motor_one,  self.motor_two = values[1:2]
         except IOError:
             self.connected = False
 
-    @state.setter:
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
     def state(self, state):
         if state:
             self.__state = state
-            self.colour = self.state_colour_codes.get(state, state.OFFLINE)
-   
-     
-    def cloe(self):
+            self.colour = self.state_colour_codes.get(state, self.State.OFFLINE) 
+  
+    def stop(self):
         self.termianted = True
         self.client_sock.close()
         self.server_sock.close()
