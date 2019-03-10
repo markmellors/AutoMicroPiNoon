@@ -63,6 +63,7 @@ class Comms:
         try:
             self.client_sock, self.client_info = self.server_sock.accept()
             self.connected = True
+            print("connected")
         except BluetoothError as e:
             # socket.timeout is presented as BluetoothError w/o errno
             if e.args[0] == 'timed out':
@@ -74,18 +75,17 @@ class Comms:
             if len(data) == 0: 
                 print ("socket data length is %d" % len(data))
                 self.last_signal = time.clock()
-            if len(data)>8:
-                firstbyte = len(data)-8
+            if len(data)>12:
+                firstbyte = len(data)-12
                 lastbyte = len(data)
                 data = data[firstbyte:lastbyte]
-                print ("data collision, trying last 8 bytes")
-            if len(data) != 8:
+                print ("data collision, trying last 12 bytes")
+            if len(data) != 12:
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data)))
-            s = struct.Struct('h2f')
+            s = struct.Struct('iff')
             values = s.unpack(data)
             print ("%s: received [%s]" % (datetime.now(), values))
-            self.state = values[0]
-            self.motor_one,  self.motor_two = values[1:2]
+            self.state, self.motor_one,  self.motor_two = values
         except IOError:
             self.connected = False
 
