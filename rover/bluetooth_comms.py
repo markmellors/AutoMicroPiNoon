@@ -18,6 +18,12 @@ class Comms:
         self.connected = False
         self.last_signal = None
         self.terminated = False
+        advertise_service( self.server_sock, "SampleServer",
+                           service_id = self.uuid,
+                           service_classes = [ self.uuid, SERIAL_PORT_CLASS ],
+                           profiles = [ SERIAL_PORT_PROFILE ], 
+        #                   protocols = [ OBEX_UUID ] 
+                            )
         self.connect()
 
     class State(Enum):
@@ -26,7 +32,6 @@ class Comms:
         OFFLINE = 1
         RC = 2
         STOPPED = 3
-
 
     def init_communicated_properties(self):
         self._state = None
@@ -43,22 +48,25 @@ class Comms:
     def run(self):
         while not self.terminated:
             if not self.connected:
-                self.state =self.State.OFFLINE
-                self.motor_one, self.motor_two = 0, 0    
+                self.state = self.State.OFFLINE
+                self.motor_one, self.motor_two = 0, 0
+                print("not connected, will try to connect")
                 self.connect()
             else:
                 self.get_latest_data()
-            if self.last_signal < (time.clock() - self.TIME_OUT):
+            if self.last_signal and self.last_signal < (time.clock() - self.TIME_OUT):
                 self.connected = False
 
     def connect(self):
-        advertise_service( self.server_sock, "SampleServer",
-                           service_id = self.uuid,
-                           service_classes = [ self.uuid, SERIAL_PORT_CLASS ],
-                           profiles = [ SERIAL_PORT_PROFILE ], 
-        #                   protocols = [ OBEX_UUID ] 
-                            )
-        self.client_sock, self.client_info = self.server_sock.accept()
+        print("trying to connect to server")
+        self.server_sock.settimeout(1)
+        try:
+            self.client_sock, self.client_info = self.server_sock.accept()
+            self.connected = True
+        except BluetoothError as e:
+            # socket.timeout is presented as BluetoothError w/o errno
+            if e.args[0] == 'timed out':
+                pass
 
     def get_latest_data(self):
         try:
@@ -92,6 +100,9 @@ class Comms:
             self.colour = self.state_colour_codes.get(state, self.State.OFFLINE) 
   
     def stop(self):
-        self.termianted = True
-        self.client_sock.close()
+        self.terminated = True
+        try:
+            self.client_sock.close()
+        except:
+            pass
         self.server_sock.close()
