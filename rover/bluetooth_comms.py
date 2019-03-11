@@ -26,21 +26,8 @@ class Comms:
                             )
         self.connect()
 
-    class State(Enum):
-        #state enumeration
-        AUTO = 0
-        OFFLINE = 1
-        RC = 2
-        STOPPED = 3
-
     def init_communicated_properties(self):
-        self._state = None
-        self.state_colour_codes = {
-            self.State.AUTO: "RED",
-            self.State.OFFLINE: "BLUE",
-            self.State.RC: "GREEN",
-            self.State.STOPPED: "MAGENTA",
-        }
+        self.state = None
         self.colour = None
         self.motor_one = None
         self.motor_two = None
@@ -48,8 +35,6 @@ class Comms:
     def run(self):
         while not self.terminated:
             if not self.connected:
-                self.state = self.State.OFFLINE
-                self.motor_one, self.motor_two = 0, 0
                 print("not connected, will try to connect")
                 self.connect()
             else:
@@ -63,6 +48,7 @@ class Comms:
         try:
             self.client_sock, self.client_info = self.server_sock.accept()
             self.connected = True
+            print("connected")
         except BluetoothError as e:
             # socket.timeout is presented as BluetoothError w/o errno
             if e.args[0] == 'timed out':
@@ -74,31 +60,20 @@ class Comms:
             if len(data) == 0: 
                 print ("socket data length is %d" % len(data))
                 self.last_signal = time.clock()
-            if len(data)>8:
-                firstbyte = len(data)-8
+            if len(data)>12:
+                firstbyte = len(data)-12
                 lastbyte = len(data)
                 data = data[firstbyte:lastbyte]
-                print ("data collision, trying last 8 bytes")
-            if len(data) != 8:
+                print ("data collision, trying last 12 bytes")
+            if len(data) != 12:
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data)))
-            s = struct.Struct('h2f')
+            s = struct.Struct('iiff')
             values = s.unpack(data)
             print ("%s: received [%s]" % (datetime.now(), values))
-            self.state = values[0]
-            self.motor_one,  self.motor_two = values[1:2]
+            self.state, self.colour, self.motor_one,  self.motor_two = values
         except IOError:
             self.connected = False
 
-    @property
-    def state(self):
-        return self._state
-
-    @state.setter
-    def state(self, state):
-        if state:
-            self.__state = state
-            self.colour = self.state_colour_codes.get(state, self.State.OFFLINE) 
-  
     def stop(self):
         self.terminated = True
         try:
