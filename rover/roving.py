@@ -18,17 +18,16 @@ RED_PIN = 0
 GREEN_PIN = 1
 
 #brightness (0-100) mapping for different colours
-BLUE = [0, 0, 100]
-RED = [100, 0, 0]
-GREEN = [0, 100, 0]
-CYAN = [0, 50, 50]
-MAGENTA = [50, 0, 50]
-YELLOW = [100, 40, 0]
+colour_bvalues = dict(
+    BLUE = [0, 0, 100]
+    RED = [100, 0, 0]
+    GREEN = [0, 100, 0]
+    CYAN = [0, 50, 50]
+    MAGENTA = [50, 0, 50]
+    YELLOW = [100, 40, 0]
+    BLACK = [0, 0, 0]
+)
 brightness = 0.25
-colour = BLUE
-explorerhat.output[RED_PIN].brightness(brightness*colour[0])
-explorerhat.output[GREEN_PIN].brightness(brightness*colour[1])
-explorerhat.output[BLUE_PIN].brightness(brightness*colour[2])
 
 
 def steering(x, y):
@@ -56,27 +55,51 @@ def steering(x, y):
     return left, right
 
 def rc_mode:
-    if joystick.connected:
-         x, y = joystick['rx','ry']
-         motor_left, motor_right = steering(x, y)
-    else:
-        motor_left, motor_right = 0, 0
-    explorerhat.motor.one.speed(int(motor_left * 100))
-    explorerhat.motor.two.speed(int(motor_right * 100))
+    with ControllerResource() as joystick:
+        if joystick.connected:
+             x, y = joystick['rx','ry']
+             motor_left, motor_right = steering(x, y)
+        else:
+            motor_left, motor_right = 0, 0
+        set_motor_speeds(motor_left, motor_right)
+    except IOError:
+        stop_motors()
 
+def host_mode:
+    """function called if in a mode where motor speeds set by host,
+        just passess received speeds straight out"""
+    set_motor_speeds(comm_link.motor_one, comm_link.motor_two)
+
+def set_motor_speeds(left, right):
+    """function to set motor speeds, accepts left and right as -1 to 1"""
+    explorerhat.motor.one.speed(int(left * 100))
+    explorerhat.motor.two.speed(int(right * 100))
+
+def stop_motors:
+    explorerhat.motor.one.speed(0)
+    explorerhat.motor.two.speed(0)
+
+def set_led(colour_name):
+    colour = colour_values.get(colour, [0, 0, 0])
+    explorerhat.output[RED_PIN].brightness(brightness*colour[0])
+    explorerhat.output[GREEN_PIN].brightness(brightness*colour[1])
+    explorerhat.output[BLUE_PIN].brightness(brightness*colour[2])
+    
+
+state_map = dict(
+    STOPPED = stop_motors,
+    OFFLINE = rc_mode,
+    RC = rc_mode,
+    SUPERVISOR = host_mode,
+    AUTO = host_mode
+)
 
 while True:
     try:
         if comm_link.connected:
-            rc_mode()
-        with ControllerResource() as joystick:
-            print('Found a joystick and connected')
-            while joystick.connected:
-                # ....
-                # ....
-        # Joystick disconnected...
-        print('Connection to joystick lost')
-    except IOError:
-        # No joystick found, wait for a bit before trying again
-        print('Unable to find any joysticks')
-        sleep(1.0)
+            state = State(comm_link.state).name
+            mode = state_map.get(state, RC)
+            mode()
+            set_led(Colour(comm_link.colour).name)
+        else:
+            rcmode()
