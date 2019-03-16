@@ -9,6 +9,7 @@ import struct
 import binascii
 from enum import Enum
 from tendo.singleton import SingleInstance
+from  comms_codes import Colour, State
 
 addr = "B8:27:EB:51:3C:F9"
 
@@ -38,13 +39,6 @@ class Sendremotecontrol():
         print ("bluetooth connected")
         return True
 
-    class State(Enum):
-        #state enumeration
-        AUTO = 0
-        OFFLINE = 1
-        RC = 2
-        STOPPED = 3
-
 
     def set_speeds(self, power_left, power_right):
         """
@@ -54,8 +48,8 @@ class Sendremotecontrol():
         :param power_right:
             Power to send to right motor, will be inverted to reflect chassis layout
         """
-        data = (self.State.AUTO.value, power_left, power_right)
-        s = struct.Struct('iff')
+        data = (State.AUTO.value, Colour.RED.value, power_left, power_right)
+        s = struct.Struct('iiff')
         packed_data = s.pack(*data)
         self.sock.send(packed_data)
         sleep(0.03)
