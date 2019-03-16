@@ -3,6 +3,15 @@ from approxeng.input.selectbinder import ControllerResource
 from time import sleep
 import math
 
+from bluetooth_comms import Comms
+import threading
+import time
+from comm_codes import Colour, State
+comm_link = Comms()
+comm_thread = threading.Thread(target=comm_link.run)
+comm_thread.daemon = True
+comm_thread.start()
+
 #explorer output pin mapping to RGB led legs                   
 BLUE_PIN = 2
 RED_PIN = 0
@@ -46,15 +55,23 @@ def steering(x, y):
 
     return left, right
 
+def rc_mode:
+    if joystick.connected:
+         x, y = joystick['rx','ry']
+         motor_left, motor_right = steering(x, y)
+    else:
+        motor_left, motor_right = 0, 0
+    explorerhat.motor.one.speed(int(motor_left * 100))
+    explorerhat.motor.two.speed(int(motor_right * 100))
+
+
 while True:
     try:
+        if comm_link.connected:
+            rc_mode()
         with ControllerResource() as joystick:
             print('Found a joystick and connected')
             while joystick.connected:
-                x, y = joystick['rx','ry']
-                motor_left, motor_right = steering(x, y)
-                explorerhat.motor.one.speed(int(motor_left * 100))
-                explorerhat.motor.two.speed(int(motor_right * 100))
                 # ....
                 # ....
         # Joystick disconnected...
