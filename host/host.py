@@ -1,10 +1,12 @@
+from time import sleep
+import math
 from approxeng.input.selectbinder import ControllerResource
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
 
-def steering(self, x, y):
+def steering(x, y):
         """Steering algorithm taken from
         https://electronics.stackexchange.com/a/293108"""
         # convert to polar
@@ -32,7 +34,7 @@ comms = Host_comms()
 
 while True:
    if not comms.connected:
-       comms.connected = comms.connect()
+       comms.connect()
    else:
        try:
            with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
@@ -45,7 +47,8 @@ while True:
                    # Get power from mixer function
                    power_left, power_right = steering(x_axis, y_axis)
                    # Set motor speeds
-                   comms.send_packet(1, 1, power_left, power_right)
+                   comms.send_packet(3, 2, power_left, power_right)
+                   sleep(0.05)
        except IOError:
            # We get an IOError when using the ControllerResource if we don't have a controller yet,
            # so in this case we just wait a second and try again after printing a message.

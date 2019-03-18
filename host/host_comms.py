@@ -1,9 +1,5 @@
 
 from bluetooth import *
-import sys
-import os
-from time import sleep
-import math
 import struct
 import binascii
 
