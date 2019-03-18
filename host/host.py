@@ -5,7 +5,6 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
-mode = State.STOPPED
 
 def steering(x, y):
         """Steering algorithm taken from
@@ -31,9 +30,9 @@ def steering(x, y):
 
         return left, right
 
-comms = Host_comms()
 
 def joystick_handler(button, comms):
+    """function usess button presses to change mode. also updates the rover appropriately"""
     if button['home']:
         print("exiting")
         comms.send_packet(State.STOPPED.value, Colour.BLACK.value, 0, 0)
@@ -56,11 +55,19 @@ def joystick_handler(button, comms):
         return State.AUTO.value
 
 def supervisor(stick_position, comms):
+    """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
     comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
     sleep(0.05)
 
+def auto(comms):
+    """placeholder for future"""
+    comms.send_packet(State.AUTO.value, Colour.RED.value, 0, 0)
+
+
+mode = State.STOPPED
+comms = Host_comms()
 
 while True:
    if not comms.connected:
@@ -68,13 +75,16 @@ while True:
    else:
        try:
            with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
-               print('Controller found, use right stick to drive.')
+               print('Controller found, use right stick to drive when in supervisor mode.')
+               print('mode key: triangle = user (RC) mode, circle = supervisor, square = auto, cross = stop. home exits')
                while joystick.connected:
                    presses = joystick.check_presses()
                    if joystick.has_presses:
                        mode = joystick_handler(presses, comms)
                    if mode == State.SUPERVISOR.value:
                        supervisor(joystick['rx', 'ry'], comms)
+                   if mode == State.AUTO.value:
+                       auto(comms)
                    if not comms.connected:
                        comms.connect()
 
@@ -82,7 +92,6 @@ while True:
            # We get an IOError when using the ControllerResource if we don't have a controller yet,
            # so in this case we just wait a second and try again after printing a message.
            print('No controller found yet')
-           print(comms.sock.SocketType)
-           sleep(0.03)
+           sleep(1)
        except SystemExit:
            raise SystemExit
