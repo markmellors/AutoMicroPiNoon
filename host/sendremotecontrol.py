@@ -9,6 +9,8 @@ import struct
 import binascii
 from enum import Enum
 from tendo.singleton import SingleInstance
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from  comms_codes import Colour, State
 
 addr = "B8:27:EB:51:3C:F9"
@@ -90,8 +92,8 @@ class Sendremotecontrol():
         right = right * math.sqrt(2)
 
         # clamp to -1/+1
-        left = 100 * max(-1, min(left, 1))
-        right = 100* max(-1, min(right, 1))
+        left = max(-1, min(left, 1))
+        right = max(-1, min(right, 1))
 
         return left, right
 
@@ -100,14 +102,10 @@ class Sendremotecontrol():
        # bail out of the loop cleanly, shutting the motors down. We can raise this in response to a button press
        try:
            while True:
-	        # Inner try / except is used to wait for a controller to become available, at which point we
-               # bind to it and enter a loop where we read axis values and send commands to the motors.
-               try:
-                   # Bind to any available joystick, this will use whatever's connected as long as the library
-                   # supports it.
-                   if not self.connected:
-                       self.connected = self.connect()
-                   else:
+               if not self.connected:
+                   self.connected = self.connect()
+               else:
+                   try:
                        with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
                            print('Controller found, use right stick to drive.')
                            # Loop until the joystick disconnects, or we deliberately stop by raising a
@@ -119,17 +117,11 @@ class Sendremotecontrol():
                                power_left, power_right = self.steering(x_axis, y_axis)
                                # Set motor speeds
                                self.set_speeds(power_left, power_right)
-               except IOError:
-                   # We get an IOError when using the ControllerResource if we don't have a controller yet,
-                   # so in this case we just wait a second and try again after printing a message.
-                   if joystick.connected:
+                   except IOError:
+                       # We get an IOError when using the ControllerResource if we don't have a controller yet,
+                       # so in this case we just wait a second and try again after printing a message.
                        print('No controller found yet')
                        sleep(1)
-                   else:
-                       self.connected = False
-                       self.connect()
-
-
 
        except RobotStopException:
            # This exception will be raised when the home button is pressed, at which point we should
