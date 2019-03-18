@@ -64,12 +64,12 @@ class Comms:
             if len(data) == 0: 
                 print ("socket data length is %d" % len(data))
                 self.last_signal = time.clock()
-            if len(data)>12:
-                firstbyte = len(data)-12
+            if len(data)>16:
+                firstbyte = len(data)-16
                 lastbyte = len(data)
                 data = data[firstbyte:lastbyte]
                 print ("data collision, trying last 12 bytes")
-            if len(data) != 12:
+            if len(data) != 16:
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data)))
             s = struct.Struct('iiff')
             values = s.unpack(data)

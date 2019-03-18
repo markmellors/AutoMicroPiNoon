@@ -22,7 +22,7 @@ RED_PIN = 0
 GREEN_PIN = 1
 
 #brightness (0-100) mapping for different colours
-colour_bvalues = dict({
+colour_values = dict({
     "BLUE": [0, 0, 100],
     "RED": [100, 0, 0],
     "GREEN": [0, 100, 0],
@@ -59,7 +59,7 @@ def steering(x, y):
     return left, right
 
 def rc_mode(joystick):
-    if joystick.connected:
+    if joystick:
         x, y = joystick['rx','ry']
         motor_left, motor_right = steering(x, y)
     else:
@@ -81,7 +81,7 @@ def stop_motors():
     explorerhat.motor.two.speed(0)
 
 def set_led(colour_name):
-    colour = colour_values.get(colour, [0, 0, 0])
+    colour = colour_values.get(colour_name, [0, 0, 0])
     explorerhat.output[RED_PIN].brightness(brightness*colour[0])
     explorerhat.output[GREEN_PIN].brightness(brightness*colour[1])
     explorerhat.output[BLUE_PIN].brightness(brightness*colour[2])
@@ -97,10 +97,16 @@ state_to_mode_map = dict({
 
 def main_loop(joystick):
     if comm_link.connected:
-        state = State(comm_link.state).name
-        mode = state_to_mode_map.get(state, RC)
+        if comm_link.state:
+            state = State(comm_link.state).name
+        else:
+            state = "RC"
+        mode = state_to_mode_map.get(state, rc_mode)
         mode(joystick)
-        set_led(Colour(comm_link.colour).name)
+        if comm_link.colour:
+            set_led(Colour(comm_link.colour).name)
+        else:
+           colour = "BLACK"
     else:
         rc_mode(joystick)
     time.sleep(0.03)
@@ -111,14 +117,14 @@ while True:
             print("joystick connected")
             while joystick.connected:
                 main_loop(joystick)
-    except OSError as err:
-        print("OS error: {0}".format(err))
     except ValueError:
         print("Could not convert data to an integer.")
     except IOError:
-        print ("joystick not connected")
-        while not joystick.connected:
-            main_loop(joystick)
+        joystick = None
+        main_loop(joystick)
+    except OSError as err:
+        print("OS error: {0}")
+        print(err)
     except:
         print("Unexpected error:", sys.exc_info()[0])
         comm_link.stop()
