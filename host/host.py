@@ -5,6 +5,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
+mode = State.STOPPED
 
 def steering(x, y):
         """Steering algorithm taken from
@@ -32,6 +33,35 @@ def steering(x, y):
 
 comms = Host_comms()
 
+def joystick_handler(button, comms):
+    if button['home']:
+        print("exiting")
+        comms.send_packet(State.STOPPED.value, Colour.BLACK.value, 0, 0)
+        raise SystemExit
+    if button['cross']:
+        print("stopped mode selected")
+        comms.send_packet(State.STOPPED.value, Colour.BLACK.value, 0, 0)
+        return State.STOPPED.value
+    if button['triangle']:
+        print("RC mode selected")
+        comms.send_packet(State.RC.value, Colour.BLUE.value, 0, 0)
+        return State.RC.value
+    if button['circle']:
+        print("supervisor mode selected")
+        comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, 0, 0)
+        return State.SUPERVISOR.value
+    if button['square']:
+        print("auto mode selected")
+        comms.send_packet(State.AUTO.value, Colour.RED.value, 0, 0)
+        return State.AUTO.value
+
+def supervisor(stick_position, comms):
+    x_axis, y_axis = stick_position
+    power_left, power_right = steering(x_axis, y_axis)
+    comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
+    sleep(0.05)
+
+
 while True:
    if not comms.connected:
        comms.connect()
@@ -39,18 +69,16 @@ while True:
        try:
            with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
                print('Controller found, use right stick to drive.')
-               # Loop until the joystick disconnects, or we deliberately stop by raising a
-               # RobotStopException
                while joystick.connected:
-                   # Get joystick values from the left analogue stick
-                   x_axis, y_axis = joystick['rx', 'ry']
-                   # Get power from mixer function
-                   power_left, power_right = steering(x_axis, y_axis)
-                   # Set motor speeds
-                   comms.send_packet(3, 2, power_left, power_right)
-                   sleep(0.05)
+                   presses = joystick.check_presses()
+                   if joystick.has_presses:
+                       mode = joystick_handler(presses, comms)
+                   if mode == State.SUPERVISOR.value:
+                       supervisor(joystick['rx', 'ry'], comms)
        except IOError:
            # We get an IOError when using the ControllerResource if we don't have a controller yet,
            # so in this case we just wait a second and try again after printing a message.
            print('No controller found yet')
-           sleep(1)
+           sleep(0.03)
+       except SystemExit:
+           raise SystemExit
