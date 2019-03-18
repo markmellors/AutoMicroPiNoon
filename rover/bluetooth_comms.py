@@ -35,6 +35,12 @@ class Comms:
 
     def run(self):
         while not self.terminated:
+            if self.last_signal and self.last_signal < (time.clock() - self.TIME_OUT):
+                self.connected = False
+                print("timed out")
+                self.client_sock.close()
+                self.server_sock.close()
+                sleep(1)
             if not self.connected:
                 if self.was_connected:
                     print("not connected, will try to connect")
@@ -42,8 +48,6 @@ class Comms:
                 self.connect()
             else:
                 self.get_latest_data()
-            if self.last_signal and self.last_signal < (time.clock() - self.TIME_OUT):
-                self.connected = False
 
     def connect(self):
         self.server_sock.settimeout(1)
@@ -51,6 +55,7 @@ class Comms:
             self.client_sock, self.client_info = self.server_sock.accept()
             self.connected = True
             self.was_connected = True
+            self.last_signal = time.clock()
             print("connected")
         except bt.BluetoothError as e:
             # socket.timeout is presented as BluetoothError w/o errno
@@ -76,7 +81,7 @@ class Comms:
 
         except IOError:
             self.connected = False
-
+            print("io error")
     def stop(self):
         self.terminated = True
         try:
