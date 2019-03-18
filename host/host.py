@@ -75,10 +75,14 @@ while True:
                        mode = joystick_handler(presses, comms)
                    if mode == State.SUPERVISOR.value:
                        supervisor(joystick['rx', 'ry'], comms)
-       except IOError:
+                   if not comms.connected:
+                       comms.connect()
+
+       except IOError as err:
            # We get an IOError when using the ControllerResource if we don't have a controller yet,
            # so in this case we just wait a second and try again after printing a message.
            print('No controller found yet')
+           print(comms.sock.SocketType)
            sleep(0.03)
        except SystemExit:
            raise SystemExit
