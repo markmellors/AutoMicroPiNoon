@@ -1,15 +1,14 @@
-from bluetooth import *
+import bluetooth as bt
 from datetime import datetime
 import time
 import struct
 import binascii
-from enum import Enum
 
 class Comms:
-    '''class to establish a bluetooth comm link with host.''' 
+    '''class to establish a bluetooth comm link with host.'''
     def __init__(self):
-        self.server_sock=BluetoothSocket( RFCOMM )
-        self.server_sock.bind(("",PORT_ANY))
+        self.server_sock=bt.BluetoothSocket( bt.RFCOMM )
+        self.server_sock.bind(("",bt.PORT_ANY))
         self.server_sock.listen(1)
         port = self.server_sock.getsockname()[1]
         self.uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
@@ -19,11 +18,11 @@ class Comms:
         self.was_connected = True
         self.last_signal = None
         self.terminated = False
-        advertise_service( self.server_sock, "SampleServer",
+        bt.advertise_service( self.server_sock, "SampleServer",
                            service_id = self.uuid,
-                           service_classes = [ self.uuid, SERIAL_PORT_CLASS ],
-                           profiles = [ SERIAL_PORT_PROFILE ], 
-        #                   protocols = [ OBEX_UUID ] 
+                           service_classes = [ self.uuid, bt.SERIAL_PORT_CLASS ],
+                           profiles = [ bt.SERIAL_PORT_PROFILE ],
+        #                   protocols = [ bt.OBEX_UUID ]
                             )
         print("comm_link initialised")
         self.connect()
@@ -53,7 +52,7 @@ class Comms:
             self.connected = True
             self.was_connected = True
             print("connected")
-        except BluetoothError as e:
+        except bt.BluetoothError as e:
             # socket.timeout is presented as BluetoothError w/o errno
             if e.args[0] == 'timed out':
                 pass
@@ -61,20 +60,20 @@ class Comms:
     def get_latest_data(self):
         try:
             data = self.client_sock.recv(1024)
-            if len(data) == 0: 
-                print ("socket data length is %d" % len(data))
+            data_len = len(data)
+
+            chunk = data[16 * -1:]
+
+            if len(chunk) == 16:
                 self.last_signal = time.clock()
-            if len(data)>16:
-                firstbyte = len(data)-16
-                lastbyte = len(data)
-                data = data[firstbyte:lastbyte]
-                print ("data collision, trying last 12 bytes")
-            if len(data) != 16:
-                print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data)))
-            s = struct.Struct('iiff')
-            values = s.unpack(data)
-            print ("%s: received [%s]" % (datetime.now(), values))
-            self.state, self.colour, self.motor_one,  self.motor_two = values
+                s = struct.Struct('iiff')
+                values = s.unpack(chunk)
+                print ("%s: received [%s]" % (datetime.now(), values))
+                self.state, self.colour, self.motor_one,  self.motor_two = values
+
+            else:
+                print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(chunk)))
+
         except IOError:
             self.connected = False
 
