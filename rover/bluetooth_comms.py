@@ -16,6 +16,7 @@ class Comms:
         self.TIME_OUT = 3
         self.init_communicated_properties()
         self.connected = False
+        self.was_connected = True
         self.last_signal = None
         self.terminated = False
         advertise_service( self.server_sock, "SampleServer",
@@ -24,6 +25,7 @@ class Comms:
                            profiles = [ SERIAL_PORT_PROFILE ], 
         #                   protocols = [ OBEX_UUID ] 
                             )
+        print("comm_link initialised")
         self.connect()
 
     def init_communicated_properties(self):
@@ -35,7 +37,9 @@ class Comms:
     def run(self):
         while not self.terminated:
             if not self.connected:
-                print("not connected, will try to connect")
+                if self.was_connected:
+                    print("not connected, will try to connect")
+                    self.was_connected = False
                 self.connect()
             else:
                 self.get_latest_data()
@@ -43,11 +47,11 @@ class Comms:
                 self.connected = False
 
     def connect(self):
-        print("trying to connect to server")
         self.server_sock.settimeout(1)
         try:
             self.client_sock, self.client_info = self.server_sock.accept()
             self.connected = True
+            self.was_connected = True
             print("connected")
         except BluetoothError as e:
             # socket.timeout is presented as BluetoothError w/o errno
