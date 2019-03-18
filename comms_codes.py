@@ -10,10 +10,10 @@ class State(Enum):
     AUTO = 4
 
 class Colour(Enum):
-    BLACK = 0
     BLUE = 1
     RED = 2
     GREEN = 3
     CYAN = 4
     MAGENTA = 5
     YELLOW = 6
+    BLACK = 7
