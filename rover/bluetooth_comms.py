@@ -37,10 +37,12 @@ class Comms:
         while not self.terminated:
             if self.last_signal and self.last_signal < (time.clock() - self.TIME_OUT):
                 self.connected = False
-                print("timed out")
+                if self.was_connected:
+                    print("timed out")
+                    self.was_connected = False
                 self.client_sock.close()
                 self.server_sock.close()
-                sleep(1)
+                time.sleep(1)
             if not self.connected:
                 if self.was_connected:
                     print("not connected, will try to connect")
