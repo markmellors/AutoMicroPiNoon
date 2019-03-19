@@ -48,6 +48,7 @@ class Tracking:
         self.FRAME_TIME = 1.0 / self.camera.framerate
         self.camera.iso = 800
         self.video = picamera.array.PiRGBArray(self.camera)
+        self.saving_images = True
         self.frame_number = 0
         self.PURGE = 50
         TIME_OUT = 10
@@ -77,10 +78,12 @@ class Tracking:
             cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
                             (obj.led.x, obj.led.y), (255, 0, 255), 3, tipLength=0.3)
             cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
-            ball_img_name = os.path.join(self.image_dir_path, "{}balloon.jpg".format(self.frame_number))
-            cv2.imwrite(ball_img_name, image)
+            self.save_image(image, "balloon")
         return largest_object
 
+    def save_image(self, image, name):
+        img_name = os.path.join(self.image_dir_path, str(self.frame_number)+name+".jpg")
+        if self.saving_images: cv2.imwrite(img_name, image)
 
     def find_objects(self, image, area_threshold):
         '''takes a binary image and returns coordinates, size and contourobject of largest contour'''
@@ -143,24 +146,23 @@ class Tracking:
                     short_sleep(self.FRAME_TIME)
                 elif self.frame_number == self.PURGE:
                     print("finished stabilising, capturing baseline")
-                    frame_name = os.path.join(self.image_dir_path,  "baseline.jpg")
                     BASELINE = frame
-                    cv2.imwrite(frame_name, frame)
+                    self.save_image(frame, "baseline")
                     print("baseline saved, running, capturing frames")
                 else:
                     frame_diff = cv2.absdiff(frame, BASELINE)
                     abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
                     robot = self.find_robot_position(frame, abs_diff)
 
-                    frame_name = os.path.join(self.image_dir_path, "{}.jpg".format(self.frame_number))
-                    diff_name = os.path.join(self.image_dir_path, "{}diff.jpg".format(self.frame_number))
+                    frame_name = "frame"
+                    diff_name = "diff"
                     if robot.area:
                         print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (robot.x , robot.y, robot.area, robot.angle*60))
-                        frame_name = os.path.join(self.image_dir_path, "{}F.jpg".format(self.frame_number))
-                        diff_name = os.path.join(self.image_dir_path, "{}diffF.jpg".format(self.frame_number))
+                        frame_name = "frameF"
+                        diff_name = "diffF"
                     else:
-                        cv2.imwrite(frame_name, frame)
-                    cv2.imwrite(diff_name, frame_diff)
+                        self.save_image(frame, frame_name)
+                    self.save_image(frame_diff, diff_name)
                 self.frame_number += 1
 
         except (KeyboardInterrupt, VideoTimeExceeded) as exc:
