@@ -52,7 +52,7 @@ class Tracking:
         self.frame_number = 0
         self.PURGE = 50
         self.baselined = False
-        TIME_OUT = 10
+        TIME_OUT = 100
         self.END_TIME = time.clock() + TIME_OUT
         base_path = os.path.dirname(os.path.realpath(__file__))
         self.image_dir_path = os.path.join(base_path, "images")
@@ -127,7 +127,7 @@ class Tracking:
          led.hsv = hsv_image[led.y, led.x]
          led.x += x_offset
          led.y += y_offset
-         print ("balloon colour is: %s, led colour: %s" % (balloon.hsv, led.hsv))
+#         print ("balloon colour is: %s, led colour: %s" % (balloon.hsv, led.hsv))
          return balloon, led, (x_offset, y_offset), (x_max, y_max)
 
     def run(self):
@@ -158,8 +158,8 @@ class Tracking:
                     frame_name = "frame"
                     diff_name = "diff"
                     if self.robot_one.area:
-                        print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % 
-                                (self.robot_one.x , self.robot_one.y, self.robot_one.area, self.robot_one.angle*60))
+#                        print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % 
+ #                               (self.robot_one.x , self.robot_one.y, self.robot_one.area, self.robot_one.angle*60))
                         frame_name = "frameF"
                         diff_name = "diffF"
                     else:

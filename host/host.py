@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
 from basic_tracking import Tracking
-fram basic_heading import path_planning
+from basic_heading import path_planning
 import threading
 
 def steering(x, y):
@@ -66,16 +66,17 @@ def supervisor(stick_position, comms):
 
 def auto(comms):
     """placeholder for future"""
-    if not tracking.baselined:
-        power_left, power_right = 0, 0
-    else:
+    #set speed to zero just in case we can't figure out what to do:
+    power_left, power_right = 0, 0
+    if tracking.baselined and tracking.robot_one.area:
         current_x = tracking.robot_one.x
         current_y = tracking.robot_one.y
-        current_heading = tracking.robot_one.heading
-        target_x, target_y = tracking.camera.resolution / 2
+        current_heading = tracking.robot_one.angle
+        image_width, image_height = tracking.camera.resolution
+        target_x, target_y = 1.0 * image_width/2, 1.0 * image_height/2
         speed, turning = path_planning(current_x, current_y, current_heading, target_x, target_y)
         power_left, power_right = steering(speed, turning) 
-    comms.send_packet(State.AUTO.value, Colour.RED.value, speed, steering)
+    comms.send_packet(State.AUTO.value, Colour.RED.value, power_left, power_right)
 
 mode = State.STOPPED
 comms = Host_comms()
