@@ -51,6 +51,7 @@ class Tracking:
         self.saving_images = True
         self.frame_number = 0
         self.PURGE = 50
+        self.baselined = False
         TIME_OUT = 10
         self.END_TIME = time.clock() + TIME_OUT
         base_path = os.path.dirname(os.path.realpath(__file__))
@@ -149,6 +150,7 @@ class Tracking:
                     BASELINE = frame
                     self.save_image(frame, "baseline")
                     print("baseline saved, running, capturing frames")
+                    self.baselined = True
                 else:
                     frame_diff = cv2.absdiff(frame, BASELINE)
                     abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)

@@ -5,6 +5,9 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
+from basic_tracking import Tracking
+fram basic_heading import path_planning
+import threading
 
 def steering(x, y):
         """Steering algorithm taken from
@@ -63,11 +66,23 @@ def supervisor(stick_position, comms):
 
 def auto(comms):
     """placeholder for future"""
-    comms.send_packet(State.AUTO.value, Colour.RED.value, 0, 0)
-
+    if not tracking.baselined:
+        power_left, power_right = 0, 0
+    else:
+        current_x = tracking.robot_one.x
+        current_y = tracking.robot_one.y
+        current_heading = tracking.robot_one.heading
+        target_x, target_y = tracking.camera.resolution / 2
+        speed, turning = path_planning(current_x, current_y, current_heading, target_x, target_y)
+        power_left, power_right = steering(speed, turning) 
+    comms.send_packet(State.AUTO.value, Colour.RED.value, speed, steering)
 
 mode = State.STOPPED
 comms = Host_comms()
+tracking = Tracking()
+tracking_thread = threading.Thread(target=tracking.run)
+tracking_thread.daemon = True
+tracking_thread.start()
 
 while True:
    if not comms.connected:
