@@ -35,8 +35,8 @@ class Marker():
 
 def short_sleep(sleep_time):
   #function that reimplements time.sleep, but is more repeatable for less than 0.1second sleep times.
-  start_time=time.clock()
-  while time.clock()<start_time+sleep_time:
+  start_time = time.clock()
+  while time.clock() < start_time + sleep_time:
     pass
 
 class Tracking:
@@ -152,12 +152,12 @@ class Tracking:
                 else:
                     frame_diff = cv2.absdiff(frame, BASELINE)
                     abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
-                    robot = self.find_robot_position(frame, abs_diff)
-
+                    self.robot_one = self.find_robot_position(frame, abs_diff)
                     frame_name = "frame"
                     diff_name = "diff"
-                    if robot.area:
-                        print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % (robot.x , robot.y, robot.area, robot.angle*60))
+                    if self.robot_one.area:
+                        print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % 
+                                (self.robot_one.x , self.robot_one.y, self.robot_one.area, self.robot_one.angle*60))
                         frame_name = "frameF"
                         diff_name = "diffF"
                     else:
