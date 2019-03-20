@@ -48,11 +48,11 @@ class Tracking:
         self.FRAME_TIME = 1.0 / self.camera.framerate
         self.camera.iso = 800
         self.video = picamera.array.PiRGBArray(self.camera)
-        self.saving_images = True
+        self.saving_images = False
         self.frame_number = 0
         self.PURGE = 50
         self.baselined = False
-        TIME_OUT = 100
+        TIME_OUT = 1000
         self.END_TIME = time.clock() + TIME_OUT
         base_path = os.path.dirname(os.path.realpath(__file__))
         self.image_dir_path = os.path.join(base_path, "images")
@@ -62,8 +62,8 @@ class Tracking:
 
 
     def find_robot_position(self, image, abs_diff):
-        CHANGE_THRESHOLD = 30
-        MIN_AREA = 400
+        CHANGE_THRESHOLD = 20
+        MIN_AREA = 300
         largest_object = Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
         MORPH_SIZE = 3

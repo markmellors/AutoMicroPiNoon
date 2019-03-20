@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from comms_codes import Colour, State
 from host_comms import Host_comms
 from basic_tracking import Tracking
-from basic_heading import path_planning
+from basic_heading import path_planning, target_maker
 import threading
 
 def steering(x, y):
@@ -61,6 +61,15 @@ def supervisor(stick_position, comms):
     """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
+
+    if tracking.baselined and tracking.robot_one.area:
+        current_x = tracking.robot_one.x
+        current_y = tracking.robot_one.y
+        current_heading = tracking.robot_one.angle
+        image_width, image_height = tracking.camera.resolution
+        target_x, target_y = 1.0 * image_width/2, 1.0 * image_height/2
+        speed, turning = path_planning(current_x, current_y, current_heading, target_x, target_y)
+
     comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
     sleep(0.05)
 
@@ -72,11 +81,13 @@ def auto(comms):
         current_x = tracking.robot_one.x
         current_y = tracking.robot_one.y
         current_heading = tracking.robot_one.angle
-        image_width, image_height = tracking.camera.resolution
-        target_x, target_y = 1.0 * image_width/2, 1.0 * image_height/2
+        target_x, target_y = target_maker()
         speed, turning = path_planning(current_x, current_y, current_heading, target_x, target_y)
-        power_left, power_right = steering(speed, turning) 
+        power_left, power_right = steering(turning, speed) 
+        print ("object found, x: %s,  y: %s, angle: %.2f" % 
+                                (current_x , current_y, current_heading*60))
     comms.send_packet(State.AUTO.value, Colour.RED.value, power_left, power_right)
+    sleep(0.05)
 
 mode = State.STOPPED
 comms = Host_comms()
