@@ -8,10 +8,6 @@ import binascii
 class Comms:
     '''class to establish a bluetooth comm link with host.'''
     def __init__(self):
-        self.server_sock=bt.BluetoothSocket( bt.L2CAP )
-        self.server_sock.bind(("",bt.PORT_ANY))
-        self.server_sock.listen(1)
-        port = self.server_sock.getsockname()[1]
         self.uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
         self.TIME_OUT = 3
         self.init_communicated_properties()
@@ -19,14 +15,7 @@ class Comms:
         self.was_connected = True
         self.last_signal = None
         self.terminated = False
-        bt.advertise_service( self.server_sock, "SampleServer",
-                           service_id = self.uuid,
-                           service_classes = [ self.uuid, bt.SERIAL_PORT_CLASS ],
-                           profiles = [ bt.SERIAL_PORT_PROFILE ],
-        #                   protocols = [ bt.OBEX_UUID ]
-                            )
-        print("comm_link initialised")
-        self.connect()
+        self.initialise()
 
     def init_communicated_properties(self):
         self.state = None
@@ -44,13 +33,22 @@ class Comms:
                 time.sleep(1)
             if not self.connected:
                 if self.was_connected:
-                    print("not connected, will try to connect")
+                    print("not connected, will try to initialise")
                     self.was_connected = False
-                self.connect()
+                self.initialise()
             else:
                 self.get_latest_data()
 
-    def connect(self):
+    def initialise(self):
+        self.server_sock=bt.BluetoothSocket( bt.L2CAP )
+        self.server_sock.bind(("",bt.PORT_ANY))
+        self.server_sock.listen(1)
+        bt.advertise_service( self.server_sock, "SampleServer",
+                           service_id = self.uuid,
+                           service_classes = [ self.uuid, bt.SERIAL_PORT_CLASS ],
+                           profiles = [ bt.SERIAL_PORT_PROFILE ],
+                            )
+        print("comm_link initialised")
         self.server_sock.settimeout(1)
         try:
             self.client_sock, self.client_info = self.server_sock.accept()
