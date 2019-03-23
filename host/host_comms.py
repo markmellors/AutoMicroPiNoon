@@ -34,6 +34,7 @@ class Host_comms:
         print ("bluetooth connected")
         self.connected = True
         self.was_connected = True
+        bluetooth.set_packet_timeout(addr,1)
 
 
 
