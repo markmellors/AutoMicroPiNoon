@@ -62,14 +62,6 @@ def supervisor(stick_position, comms):
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
 
-    if tracking.baselined and tracking.robot_one.area:
-        current_x = tracking.robot_one.x
-        current_y = tracking.robot_one.y
-        current_heading = tracking.robot_one.angle
-        image_width, image_height = tracking.camera.resolution
-        target_x, target_y = 1.0 * image_width/2, 1.0 * image_height/2
-        speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y)
-
     comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
     sleep(0.03)
 
@@ -81,7 +73,7 @@ def auto(comms):
         current_x = tracking.robot_one.x
         current_y = tracking.robot_one.y
         current_heading = tracking.robot_one.angle
-        target_x, target_y = circle_target()
+        target_x, target_y = target_maker()
         speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y)
         power_left, power_right = steering(turning, speed) 
 #        print ("object found, x: %s,  y: %s, angle: %.2f" % 

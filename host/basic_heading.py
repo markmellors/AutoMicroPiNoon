@@ -17,13 +17,13 @@ class Heading:
             self.w = (current_heading - self.last_heading)/(time.clock() - self.last_time)
         heading_offset = 0
         steering_p = 0.6
-        steering_d = -0.05
+        steering_d = -0.01
         speed_p = 0.01  #was 0.005 for square
         bearing_to_target = math.atan2((current_y-target_y) , (current_x-target_x))
         distance_to_target = math.sqrt((current_x-target_x)**2+(current_y-target_y)**2)
         heading_error = current_heading - bearing_to_target - heading_offset
         heading_error =  normalise_angle(heading_error)
-        if distance_to_target > 10:
+        if distance_to_target > 30:
             speed = 0.1 + speed_p * distance_to_target
             steering = -steering_p * heading_error
             if self.last_time:
@@ -46,18 +46,18 @@ def normalise_angle(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
 
 def target_maker():
-    move_time = 7000
+    move_time = 10000
     now = datetime.datetime.now()
     #convert now into milliseconds
     now = now.second * 1000 + now.microsecond/1000
     if (now % move_time) > (move_time * 3 / 4):
-        x , y = 140, 140
+        x , y = 130, 130
     elif (now % move_time) > (move_time / 2):
-        x , y = 140, 65
+        x , y = 130, 75
     elif (now % move_time) > (move_time / 4):
-        x , y = 65, 65
+        x , y = 75, 75
     else:
-        x , y = 65, 140
+        x , y = 75, 130
     return x, y
 
 def circle_target():

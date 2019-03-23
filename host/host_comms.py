@@ -41,7 +41,7 @@ class Host_comms:
         s = struct.Struct('iiff')
         packed_data = s.pack(*data)
         try:
-            self.sock.send(packed_data)
+            self.sock.sendall(packed_data)
         except IOError as err:
             print(err)
             self.connected = False
