@@ -93,3 +93,7 @@ class Comms:
         except:
             pass
         self.server_sock.close()
+
+if __name__ == "__main__":
+    comms = Comms()
+    comms.run()
