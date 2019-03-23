@@ -28,7 +28,7 @@ class Host_comms:
         print ("connecting to \"%s\" on %s" % (name, host))
 
                # Create the client socket
-        self.sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+        self.sock=bluetooth.BluetoothSocket( bluetooth.L2CAP )
         self.sock.connect((host, port))
         print ("bluetooth connected")
         self.connected = True

@@ -7,7 +7,7 @@ import binascii
 class Comms:
     '''class to establish a bluetooth comm link with host.'''
     def __init__(self):
-        self.server_sock=bt.BluetoothSocket( bt.RFCOMM )
+        self.server_sock=bt.BluetoothSocket( bt.L2CAP )
         self.server_sock.bind(("",bt.PORT_ANY))
         self.server_sock.listen(1)
         port = self.server_sock.getsockname()[1]
