@@ -1,4 +1,5 @@
 import bluetooth as bt
+from timeit import default_timer as timer
 from datetime import datetime
 import time
 import struct
@@ -40,7 +41,7 @@ class Comms:
                 print("timed out")
                 self.client_sock.close()
                 self.server_sock.close()
-                sleep(1)
+                time.sleep(1)
             if not self.connected:
                 if self.was_connected:
                     print("not connected, will try to connect")
@@ -53,6 +54,7 @@ class Comms:
         self.server_sock.settimeout(1)
         try:
             self.client_sock, self.client_info = self.server_sock.accept()
+            self.client_sock.settimeout(0.001)
             self.connected = True
             self.was_connected = True
             self.last_signal = time.clock()
@@ -64,24 +66,28 @@ class Comms:
 
     def get_latest_data(self):
         try:
-            data = self.client_sock.recv(1024)
+            start = timer()
+            data = self.client_sock.recv(16) #1024)
+            end = timer()
             data_len = len(data)
-
+#            print (data_len)
             chunk = data[16 * -1:]
-
+#            print(end-start)
+            print(datetime.now())
             if len(chunk) == 16:
                 self.last_signal = time.clock()
                 s = struct.Struct('iiff')
                 values = s.unpack(chunk)
-                print ("%s: received [%s]" % (datetime.now(), values))
+#                print ("%s: received [%s]" % (datetime.now(), values))
                 self.state, self.colour, self.motor_one,  self.motor_two = values
 
             else:
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(chunk)))
 
         except IOError:
-            self.connected = False
-            print("io error")
+            pass
+#            self.connected = False
+#            print("io error")
     def stop(self):
         self.terminated = True
         try:

@@ -109,7 +109,7 @@ def main_loop(joystick):
            colour = "BLACK"
     else:
         rc_mode(joystick)
-    time.sleep(0.03)
+    time.sleep(0.001)
 
 while True:
     try:
