@@ -12,7 +12,8 @@ class Host_comms:
     def connect(self):
         # search for the SampleServer service
         uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-        addr = "B8:27:EB:51:3C:F9"
+        addr = "B8:27:EB:41:AC:63" #if on pi zero
+        #addr = "B8:27:EB:51:3C:F9" #if on pi 3b
         service_matches = bluetooth.find_service( uuid = uuid, address = addr )
         if len(service_matches) == 0:
             if self.was_connected:

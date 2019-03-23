@@ -4,7 +4,7 @@ import threading
 
 comms = Host_comms()
 comms.connect()
-time.sleep(1)
+time.sleep(3)
 input("input")
 for i in range (0, 30):
     comms.send_packet(3, 2,0.5,0.5)

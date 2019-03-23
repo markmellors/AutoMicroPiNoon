@@ -1,9 +1,11 @@
 import bluetooth as bt
+import gc
 from timeit import default_timer as timer
 from datetime import datetime
 import time
 import struct
 import binascii
+gc.disable()
 
 class Comms:
     '''class to establish a bluetooth comm link with host.'''
@@ -81,7 +83,7 @@ class Comms:
 
             else:
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(chunk)))
-
+            time.sleep(0.01)
         except IOError:
             pass
 #            self.connected = False
