@@ -82,6 +82,7 @@ class Comms:
                 self.state, self.colour, self.motor_one,  self.motor_two = values
 
             else:
+                time.sleep(2)
                 print ("%s: partial receive, data length is %d - skipping" % (datetime.now(), len(chunk)))
             time.sleep(0.01)
         except IOError:

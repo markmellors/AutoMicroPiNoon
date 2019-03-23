@@ -7,6 +7,7 @@ from comms_codes import Colour, State
 from host_comms import Host_comms
 from basic_tracking import Tracking
 from basic_heading import Heading, target_maker, circle_target
+import datetime
 import threading
 
 def steering(x, y):
@@ -61,9 +62,8 @@ def supervisor(stick_position, comms):
     """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
-
     comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
-    sleep(0.03)
+    sleep(0.01)
 
 def auto(comms):
     """placeholder for future"""
