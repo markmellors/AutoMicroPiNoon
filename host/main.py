@@ -15,8 +15,20 @@ def gen(camera):
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen(VideoCamera()),
+#    return Response(gen(VideoCamera()),
+    return Response(frame_holder.serve_frame(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+class Frame_holder():
+    def __init__(self):
+        camera = VideoCamera()
+        self.frame = camera.get_frame()
+
+    def serve_frame(self):
+        while True:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + self.frame + b'\r\n\r\n')
+
+frame_holder = Frame_holder()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
