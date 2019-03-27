@@ -7,6 +7,9 @@
 import explorerhat
 from bluetooth import *
 from datetime import datetime
+from time import sleep
+import struct
+import binascii
 
 server_sock=BluetoothSocket( RFCOMM )
 server_sock.bind(("",PORT_ANY))
@@ -44,19 +47,24 @@ print "Waiting for connection on RFCOMM channel %d" % port
 
 client_sock, client_info = server_sock.accept()
 print "Accepted connection from ", client_info
-
 try:
     while True:
         data = client_sock.recv(1024)
         if len(data) == 0: 
             print "socket data length is %d" % len(data)
             continue
-        print "%s: received [%s]" % (datetime.now(), data)
-	values = data.split(",")
-        if len(values) != 2:
-            print "data length is %d - skipping" % len(values)
+        if len(data)>8:
+            firstbyte = len(data)-8
+            lastbyte = len(data)
+            data = data[firstbyte:lastbyte]
+            print "data collision, trying last 8 bytes"
+        if len(data) != 8:
+            print "%s: partial receive, data length is %d - skipping" % (datetime.now(), len(data))
             continue
-        motor_one,  motor_two = [int(i) for i in data.split(",")]
+        s = struct.Struct('2f')
+ 	values = s.unpack(data)
+        print "%s: received [%s]" % (datetime.now(), values)
+        motor_one,  motor_two = values
         explorerhat.motor.one.speed(motor_one)
         explorerhat.motor.two.speed(motor_two)
 except IOError:
