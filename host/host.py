@@ -89,29 +89,34 @@ tracking_thread = threading.Thread(target=tracking.run)
 tracking_thread.daemon = True
 tracking_thread.start()
 
-while True:
-   if not comms.connected:
-       comms.connect()
-   else:
-       try:
-           with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
-               print('Controller found, use right stick to drive when in supervisor mode.')
-               print('mode key: triangle = user (RC) mode, circle = supervisor, square = auto, cross = stop. home exits')
-               while joystick.connected:
-                   presses = joystick.check_presses()
-                   if joystick.has_presses:
-                       mode = joystick_handler(presses, comms)
-                   if mode == State.SUPERVISOR.value:
-                       supervisor(joystick['rx', 'ry'], comms)
-                   if mode == State.AUTO.value:
-                       auto(comms)
-                   if not comms.connected:
-                       comms.connect()
+def run():
+    while True:
+        if not comms.connected:
+            comms.connect()
+        else:
+            try:
+                with ControllerResource(dead_zone=0.1, hot_zone=0.2) as joystick:
+                    print('Controller found, use right stick to drive when in supervisor mode.')
+                    print('mode key: triangle = user (RC) mode, circle = supervisor, square = auto, cross = stop. home exits')
+                    while joystick.connected:
+                        presses = joystick.check_presses()
+                        if joystick.has_presses:
+                            mode = joystick_handler(presses, comms)
+                        if mode == State.SUPERVISOR.value:
+                            supervisor(joystick['rx', 'ry'], comms)
+                        if mode == State.AUTO.value:
+                            auto(comms)
+                        if not comms.connected:
+                            comms.connect()
 
-       except IOError as err:
-           # We get an IOError when using the ControllerResource if we don't have a controller yet,
-           # so in this case we just wait a second and try again after printing a message.
-           print('No controller found yet')
-           sleep(1)
-       except SystemExit:
-           raise SystemExit
+            except IOError as err:
+                # We get an IOError when using the ControllerResource if we don't have a controller yet,
+                # so in this case we just wait a second and try again after printing a message.
+                print('No controller found yet')
+                sleep(1)
+            except SystemExit:
+                raise SystemExit
+
+if __name__ == "__main__":
+
+    run()

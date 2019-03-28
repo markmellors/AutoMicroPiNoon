@@ -41,6 +41,10 @@ def short_sleep(sleep_time):
 
 class Tracking:
     def __init__(self):
+#        image_server_thread = threading.Thread(target=main.launch_video_feed())
+#        image_server_thread.daemon = True
+#        image_server_thread.start()
+#        print("server started")
         self.camera = picamera.PiCamera()
         self.camera.resolution = (320, 240)
         self.camera.framerate = 30
@@ -85,6 +89,10 @@ class Tracking:
     def save_image(self, image, name):
         img_name = os.path.join(self.image_dir_path, str(self.frame_number)+name+".jpg")
         if self.saving_images: cv2.imwrite(img_name, image)
+        if name == "balloon":
+            ret, jpeg = cv2.imencode('.jpg', image)
+            frame_holder.frame = jpeg.tobytes()
+
 
     def find_objects(self, image, area_threshold):
         '''takes a binary image and returns coordinates, size and contourobject of largest contour'''
