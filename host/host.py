@@ -50,18 +50,18 @@ def joystick_handler(button, comms):
         return State.RC.value
     if button['circle']:
         print("supervisor mode selected")
-        comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, 0, 0)
+        comms.send_packet(State.SUPERVISOR.value, Colour.RED.value, 0, 0)
         return State.SUPERVISOR.value
     if button['square']:
         print("auto mode selected")
-        comms.send_packet(State.AUTO.value, Colour.RED.value, 0, 0)
+        comms.send_packet(State.AUTO.value, Colour.GREEN.value, 0, 0)
         return State.AUTO.value
 
 def supervisor(stick_position, comms):
     """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
-    comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
+    comms.send_packet(State.SUPERVISOR.value, Colour.RED.value, power_left, power_right)
 #    sleep(0.03)
 
 def auto(comms):
@@ -75,13 +75,10 @@ def auto(comms):
         if tracking.user_bot.area:
             target_x, target_y = tracking.user_bot.x, tracking.user_bot.y
         else:
-            target_x, target_y = target_maker()
+            target_x, target_y = None, None
         speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y)
-        power_left, power_right = steering(turning, speed) 
-#        print ("object found, x: %s,  y: %s, angle: %.2f" % 
-#                                (current_x , current_y, current_heading*60))
-    comms.send_packet(State.AUTO.value, Colour.RED.value, power_left, power_right)
-#    sleep(0.03)
+        power_left, power_right = steering(turning, speed)
+    comms.send_packet(State.AUTO.value, Colour.GREEN.value, power_left, power_right)
 
 mode = State.STOPPED
 comms = Host_comms()

@@ -81,7 +81,6 @@ class Tracking():
         if target == self.auto_bot:
             nominal_led_value = 30, 120, 255
         else:
-            print(ufo_led)
             nominal_led_value = 125, 50, 180
         led_dist = cv2.norm(ufo_led, nominal_led_value)
         weighted_distance = SHADOW_DIST_K * shadow_dist + TRANSLATION_K * trans_dist + LED_K * led_dist

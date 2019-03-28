@@ -7,14 +7,25 @@ class Heading:
         self.last_y = None
         self.last_heading = None
         self.last_time = None
+        self.last_target_x = None
+        self.last_target_y = None
         self.v = 0
         self.w = 0
+        self.target_v = 0
 
     def path_planning(self, current_x, current_y, current_heading, target_x, target_y):
         """simple routine to head to a target position"""
+        if not target_x: #if no target spotted, use last times values
+            if not self.last_time:
+                target_x, target_y = 70, 70
+            else:
+                target_x = 0.01*70 + 0.99*self.last_target_x
+                target_y = 0.01*70 + 0.99*self.last_target_y
         if self.last_time:
             self.v = math.sqrt((current_x-self.last_x)**2+(current_y-self.last_y)**2)
             self.w = (current_heading - self.last_heading)/(time.clock() - self.last_time)
+            if target_x:
+                self.target_v = math.sqrt((target_x-self.last_target_x)**2+(target_y-self.last_target_y)**2)
         heading_offset = 0
         steering_p = 0.6
         steering_d = -0.01
@@ -31,15 +42,16 @@ class Heading:
         else:
             speed = 0
             steering = 0
-        self.update_last_properties(current_x, current_y, current_heading)
-#        print("%s, %s, %s, %s, %s" %(current_x, current_y, current_heading, bearing_to_target, distance_to_target))
+        self.update_last_properties(current_x, current_y, current_heading, target_x, target_y)
         return speed, steering
 
-    def update_last_properties(self, x, y, heading):
+    def update_last_properties(self, x, y, heading, t_x, t_y):
         self.last_x = x
         self.last_y = y
         self.last_heading = heading
         self.last_time = time.clock()
+        self.last_target_x = t_x
+        self.last_target_y = t_y
 
 def normalise_angle(angle):
     """should wrap the angle around and return it in the range +/-pi radians"""
