@@ -62,7 +62,7 @@ def supervisor(stick_position, comms):
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
     comms.send_packet(State.SUPERVISOR.value, Colour.GREEN.value, power_left, power_right)
-    sleep(0.03)
+#    sleep(0.03)
 
 def auto(comms):
     """placeholder for future"""
@@ -81,7 +81,7 @@ def auto(comms):
 #        print ("object found, x: %s,  y: %s, angle: %.2f" % 
 #                                (current_x , current_y, current_heading*60))
     comms.send_packet(State.AUTO.value, Colour.RED.value, power_left, power_right)
-    sleep(0.03)
+#    sleep(0.03)
 
 mode = State.STOPPED
 comms = Host_comms()

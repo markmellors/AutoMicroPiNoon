@@ -65,8 +65,8 @@ class Tracking():
 
 
     def find_robot_position(self, image, abs_diff):
-        CHANGE_THRESHOLD = 35
-        MIN_AREA = 200
+        CHANGE_THRESHOLD = 30
+        MIN_AREA = 400
         auto_bot, user_bot = Robot(), Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
         unknown_objects = self.find_objects(mask, MIN_AREA)
@@ -91,7 +91,6 @@ class Tracking():
                     if ufo.area > largest_opponent and not num == auto_bot_index:
                         user_bot_index = num
                         largest_opponent = ufo.area
-                print(len(unknown_objects))
                 obj = unknown_objects[user_bot_index]
                 user_bot = obj
                 m = cv2.moments(obj.contour)
@@ -99,7 +98,7 @@ class Tracking():
                 chassis_y = int(m['m01']/m['m00'])
                 user_bot.angle = atan2(obj.balloon.y - chassis_y, obj.balloon.x - chassis_x)
                 cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
-                                (chassis_x, chassis_y), (0, 0, 255), 3, tipLength=0.3)
+                                (chassis_x, chassis_y), (255, 0, 0), 3, tipLength=0.3)
                 cv2.rectangle(image, obj.p1, obj.p2, (0, 0, 255), 1)
             self.save_image(image, "balloon")
         return auto_bot, user_bot
@@ -155,15 +154,16 @@ class Tracking():
          return balloon, led, (x_offset, y_offset), (x_max, y_max)
 
     def update_baseline(self, current_baseline, latest_image, diff):
-        MERGE_FRACTION = 0.01
+        MERGE_FRACTION = 0.01 #fraction of unchanged portion of image to merge into baseline
         KEEP_FRACTION = 1 - MERGE_FRACTION
+        DUMB_MERGE_FRACTION = 0.1 #fraction of changed portion of image to merge into baseline
+        SANE_FRACTION = 1 - DUMB_MERGE_FRACTION
         CHANGE_THRESHOLD = 15  #think this should be more discriminating than the object detection
         mask = cv2.inRange(diff, 0, CHANGE_THRESHOLD)
         locs = np.where(mask != 0) # Get the non-zero mask locations
         modified_image = latest_image.copy()
         if len(latest_image.shape) == 3 and len(current_baseline.shape) != 3:
             modified_image[locs[0], locs[1]] = current_baseline[locs[0], locs[1], None]
-
         # Case #2 - Both images are colour or grayscale
         elif (len(latest_image.shape) == 3 and len(current_baseline.shape) == 3) or \
            (len(latest_image.shape) == 1 and len(current_baseline.shape) == 1):
@@ -171,7 +171,7 @@ class Tracking():
         # Otherwise, we can't do this
         else:
             raise Exception("Incompatible input and output dimensions")
-
+        modified_image = cv2.addWeighted(modified_image, SANE_FRACTION, latest_image, DUMB_MERGE_FRACTION, 0)
         return cv2.addWeighted(current_baseline, KEEP_FRACTION, modified_image, MERGE_FRACTION, 0)
 
     def run(self):
@@ -182,10 +182,10 @@ class Tracking():
                 frame = (frame_buf.array)
                 self.video.truncate(0)
                 # Our operations on the frame come here
-                left_crop = 50
-                right_crop = 250
+                left_crop = 0 #50
+                right_crop = 280 #250
                 bottom_crop = 0
-                top_crop =  210
+                top_crop =  240 #210
                 frame = frame[bottom_crop:top_crop, left_crop:right_crop]
                 if self.frame_number < self.PURGE:
                     short_sleep(self.FRAME_TIME)
