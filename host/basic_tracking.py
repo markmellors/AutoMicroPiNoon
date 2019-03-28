@@ -65,7 +65,7 @@ class Tracking():
 
 
     def find_robot_position(self, image, abs_diff):
-        CHANGE_THRESHOLD = 45
+        CHANGE_THRESHOLD = 35
         MIN_AREA = 200
         auto_bot, user_bot = Robot(), Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
@@ -76,9 +76,7 @@ class Tracking():
             if ufo.led.hsv[2] > brightest_led:
                 auto_bot_index = num
                 brightest_led = ufo.led.hsv[2]
-            if ufo.area > largest_opponent:
-                user_bot_index = num
-                largest_opponent = ufo.area
+
 #        print (brightest_led)
         if len(unknown_objects) > 0:
             obj = unknown_objects[auto_bot_index]
@@ -88,6 +86,12 @@ class Tracking():
                             (obj.led.x, obj.led.y), (255, 0, 255), 3, tipLength=0.3)
             cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
             if len(unknown_objects) > 1:
+                for num, ufo in enumerate(unknown_objects, start =0):
+                    ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
+                    if ufo.area > largest_opponent and not num == auto_bot_index:
+                        user_bot_index = num
+                        largest_opponent = ufo.area
+                print(len(unknown_objects))
                 obj = unknown_objects[user_bot_index]
                 user_bot = obj
                 m = cv2.moments(obj.contour)
@@ -95,8 +99,8 @@ class Tracking():
                 chassis_y = int(m['m01']/m['m00'])
                 user_bot.angle = atan2(obj.balloon.y - chassis_y, obj.balloon.x - chassis_x)
                 cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
-                                (chassis_x, chassis_y), (255, 0, 255), 3, tipLength=0.3)
-                cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
+                                (chassis_x, chassis_y), (0, 0, 255), 3, tipLength=0.3)
+                cv2.rectangle(image, obj.p1, obj.p2, (0, 0, 255), 1)
             self.save_image(image, "balloon")
         return auto_bot, user_bot
 
