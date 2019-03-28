@@ -27,8 +27,8 @@ class Heading:
             if target_x:
                 self.target_v = math.sqrt((target_x-self.last_target_x)**2+(target_y-self.last_target_y)**2)
         heading_offset = 0
-        steering_p = 0.6
-        steering_d = -0.01
+        steering_p = 0.9
+        steering_d = -0.006
         speed_p = 0.01  #was 0.005 for square
         bearing_to_target = math.atan2((current_y-target_y) , (current_x-target_x))
         distance_to_target = math.sqrt((current_x-target_x)**2+(current_y-target_y)**2)

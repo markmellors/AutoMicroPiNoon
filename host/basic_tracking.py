@@ -71,7 +71,12 @@ class Tracking():
         shadow_rgb = 120, 180, 150
         ufo_rgb_range = colour_of_contour(image, ufo.contour) #returns 6 values, rgb, 1 S.D. above and below mean 
         ufo_upper_rgb = ufo_rgb_range[1] #takes upper S.D. values
-        ufo_rgb = ufo_upper_rgb[0][0], ufo_upper_rgb[1][0], ufo_upper_rgb[2][0] #converts single element arrays to values
+        try:
+            ufo_rgb = ufo_upper_rgb[0][0], ufo_upper_rgb[1][0], ufo_upper_rgb[2][0] #converts single element arrays to values
+        except:
+            print("weird index error:")
+            print(ufo_upper_rgb)
+            ufo_rgb = 120, 180, 150 
         shadow_dist = cv2.norm(ufo_rgb, shadow_rgb)
         if target.area:
             trans_dist = cv2.norm((ufo.x, ufo.y),(target.x, target.y))
@@ -96,7 +101,6 @@ class Tracking():
         for num, ufo in enumerate(unknown_objects, start =0):
             ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
             dist_to_auto_bot = self.calc_ufo_distance(image, ufo, self.auto_bot)
-  #          print (dist_to_auto_bot)
             if dist_to_auto_bot < closest_to_auto_bot:
                 auto_bot_index = num
                 closest_to_auto_bot = dist_to_auto_bot 
