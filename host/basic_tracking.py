@@ -87,8 +87,8 @@ class Tracking():
         return weighted_distance
 
     def find_robot_position(self, image, abs_diff):
-        CHANGE_THRESHOLD = 30
-        MIN_AREA = 400
+        CHANGE_THRESHOLD = 25
+        MIN_AREA = 200
         auto_bot, user_bot = Robot(), Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
         unknown_objects = self.find_objects(mask, MIN_AREA)

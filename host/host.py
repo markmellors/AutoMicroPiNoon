@@ -1,5 +1,5 @@
 from time import sleep
-import math
+import math, random
 from approxeng.input.selectbinder import ControllerResource
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -61,13 +61,15 @@ def supervisor(stick_position, comms):
     """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
+    print (tracking.auto_bot.area)
     comms.send_packet(State.SUPERVISOR.value, Colour.RED.value, power_left, power_right)
 #    sleep(0.03)
 
 def auto(comms):
     """placeholder for future"""
-    #set speed to zero just in case we can't figure out what to do:
-    power_left, power_right = 0, 0
+    #set speed to a random value just in case we can't figure out what to do:
+    RAND_SPEED = 1
+    power_left, power_right = random.uniform(-RAND_SPEED, RAND_SPEED), random.uniform(-RAND_SPEED, RAND_SPEED)
     if tracking.baselined and tracking.auto_bot.area:
         current_x = tracking.auto_bot.x
         current_y = tracking.auto_bot.y
