@@ -61,15 +61,13 @@ def supervisor(stick_position, comms):
     """function takes the current joystick position, mixes it and sends it to the rover"""
     x_axis, y_axis = stick_position
     power_left, power_right = steering(x_axis, y_axis)
-    print (tracking.auto_bot.area)
     comms.send_packet(State.SUPERVISOR.value, Colour.RED.value, power_left, power_right)
-#    sleep(0.03)
 
 def auto(comms):
     """placeholder for future"""
     #set speed to a random value just in case we can't figure out what to do:
     RAND_SPEED = 1
-    power_left, power_right = random.uniform(-RAND_SPEED, RAND_SPEED), random.uniform(-RAND_SPEED, RAND_SPEED)
+    power_left, power_right = random.choice((-RAND_SPEED, RAND_SPEED)), random.choice((-RAND_SPEED, RAND_SPEED))
     if tracking.baselined and tracking.auto_bot.area:
         current_x = tracking.auto_bot.x
         current_y = tracking.auto_bot.y
@@ -81,6 +79,11 @@ def auto(comms):
         speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y)
         power_left, power_right = steering(turning, speed)
     comms.send_packet(State.AUTO.value, Colour.GREEN.value, power_left, power_right)
+    GO_WILD_PROBABILITY = 0.01 if not tracking.auto_bot.area else 0.0003
+    GO_WILD_TIME = 0.5
+    if random.random() < GO_WILD_PROBABILITY:
+        print("GOING  WIIILLLLLD!!")
+        sleep(GO_WILD_TIME)
 
 mode = State.STOPPED
 comms = Host_comms()
