@@ -65,22 +65,25 @@ class Tracking():
         print("setup complete, camera rolling but stabilising first")
 
     def calc_ufo_distance(self, image, ufo, target):
-        SHADOW_DIST_K = -0.01   #max theoretical dist is ~760, max in practice is?. more diff better
+        SHADOW_DIST_K = -0.01   #max theoretical dist is ~360, max in practice is?. more diff better
         TRANSLATION_K = 0.1  #theoretical max dist is ~400, typical will be 100. less diff better
-        LED_K = 0.1 #theoretical max is 760, typical will be 300 for opponent, 400 for shadow. less diff better
-        shadow_rgb = 60, 10, 140
+        LED_K = 0.1 #theoretical max is ~360, typical will be 100 for opponent, 400 for shadow. less diff better
+        shadow_rgb = 120, 180, 150
         ufo_rgb_range = colour_of_contour(image, ufo.contour) #returns 6 values, rgb, 1 S.D. above and below mean 
         ufo_upper_rgb = ufo_rgb_range[1] #takes upper S.D. values
         ufo_rgb = ufo_upper_rgb[0][0], ufo_upper_rgb[1][0], ufo_upper_rgb[2][0] #converts single element arrays to values
         shadow_dist = cv2.norm(ufo_rgb, shadow_rgb)
         if target.area:
             trans_dist = cv2.norm((ufo.x, ufo.y),(target.x, target.y))
-            led_dist = cv2.norm(ufo.led.hsv, target.led.hsv)
         else:
             trans_dist = 100 #no previous position, so use average
-            nominal_led_value = 125, 1, 255
-            ufo_led = 1.0*ufo.led.hsv[0], 1.0*ufo.led.hsv[1], 1.0*ufo.led.hsv[2]
-            led_dist = cv2.norm(ufo_led, nominal_led_value)
+        ufo_led = 1.0*ufo.led.hsv[0], 1.0*ufo.led.hsv[1], 1.0*ufo.led.hsv[2]
+        if target == self.auto_bot:
+            nominal_led_value = 30, 120, 255
+        else:
+            print(ufo_led)
+            nominal_led_value = 125, 50, 180
+        led_dist = cv2.norm(ufo_led, nominal_led_value)
         weighted_distance = SHADOW_DIST_K * shadow_dist + TRANSLATION_K * trans_dist + LED_K * led_dist
         return weighted_distance
 
@@ -90,16 +93,14 @@ class Tracking():
         auto_bot, user_bot = Robot(), Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
         unknown_objects = self.find_objects(mask, MIN_AREA)
-        brightest_led, largest_opponent = 0, 0
+        closest_to_auto_bot, closest_to_user_bot = 1000, 1000
         for num, ufo in enumerate(unknown_objects, start =0):
             ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
-            distance_from_auto_bot = self.calc_ufo_distance(image, ufo, self.auto_bot)
-            print (distance_from_auto_bot)
-            if ufo.led.hsv[2] > brightest_led:
+            dist_to_auto_bot = self.calc_ufo_distance(image, ufo, self.auto_bot)
+  #          print (dist_to_auto_bot)
+            if dist_to_auto_bot < closest_to_auto_bot:
                 auto_bot_index = num
-                brightest_led = ufo.led.hsv[2]
-
-#        print (brightest_led)
+                closest_to_auto_bot = dist_to_auto_bot 
         if len(unknown_objects) > 0:
             obj = unknown_objects[auto_bot_index]
             auto_bot = obj
@@ -110,9 +111,10 @@ class Tracking():
             if len(unknown_objects) > 1:
                 for num, ufo in enumerate(unknown_objects, start =0):
                     ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
-                    if ufo.area > largest_opponent and not num == auto_bot_index:
+                    dist_to_user_bot = self.calc_ufo_distance(image, ufo, self.user_bot)
+                    if dist_to_user_bot < closest_to_user_bot and not num == auto_bot_index:
                         user_bot_index = num
-                        largest_opponent = ufo.area
+                        closest_to_user_bot = dist_to_user_bot
                 obj = unknown_objects[user_bot_index]
                 user_bot = obj
                 m = cv2.moments(obj.contour)
