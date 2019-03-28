@@ -135,6 +135,11 @@ class Tracking():
 #         print ("balloon colour is: %s, led colour: %s" % (balloon.hsv, led.hsv))
          return balloon, led, (x_offset, y_offset), (x_max, y_max)
 
+    def update_baseline(self, current_baseline, latest_image):
+        MERGE_FRACTION = 0.003
+        KEEP_FRACTION = 1 - MERGE_FRACTION
+        return cv2.addWeighted(current_baseline, KEEP_FRACTION, latest_image, MERGE_FRACTION, 0)
+
     def run(self):
         try:
             for frame_buf in self.camera.capture_continuous(self.video, format ="bgr", use_video_port=True):
@@ -170,6 +175,7 @@ class Tracking():
                     else:
                         self.save_image(frame, frame_name)
                     self.save_image(frame_diff, diff_name)
+                    BASELINE =  self.update_baseline(BASELINE, frame)
                 self.frame_number += 1
 
         except (KeyboardInterrupt, VideoTimeExceeded) as exc:
