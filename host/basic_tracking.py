@@ -59,31 +59,46 @@ class Tracking():
         self.END_TIME = time.clock() + TIME_OUT
         base_path = os.path.dirname(os.path.realpath(__file__))
         self.image_dir_path = os.path.join(base_path, "images")
-        self.robot_one = Robot()
-        self.robot_two = Robot()
+        self.auto_bot = Robot()
+        self.user_bot = Robot()
         print("setup complete, camera rolling but stabilising first")
 
 
     def find_robot_position(self, image, abs_diff):
         CHANGE_THRESHOLD = 45
-        MIN_AREA = 300
-        largest_object = Robot()
+        MIN_AREA = 200
+        auto_bot, user_bot = Robot(), Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
-#        MORPH_SIZE = 3
-#        kernel = np.ones((MORPH_SIZE,MORPH_SIZE),np.uint8) 
-#        opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        unknown_objects = self.find_objects(mask, MIN_AREA) #opening, MIN_AREA)
-        for ufo in unknown_objects:
+        unknown_objects = self.find_objects(mask, MIN_AREA)
+        brightest_led, largest_opponent = 0, 0
+        for num, ufo in enumerate(unknown_objects, start =0):
             ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
+            if ufo.led.hsv[2] > brightest_led:
+                auto_bot_index = num
+                brightest_led = ufo.led.hsv[2]
+            if ufo.area > largest_opponent:
+                user_bot_index = num
+                largest_opponent = ufo.area
+#        print (brightest_led)
         if len(unknown_objects) > 0:
-            obj = unknown_objects[0]
-            largest_object = obj
-            largest_object.angle = atan2(obj.balloon.y - obj.led.y, obj.balloon.x - obj.led.x)
+            obj = unknown_objects[auto_bot_index]
+            auto_bot = obj
+            auto_bot.angle = atan2(obj.balloon.y - obj.led.y, obj.balloon.x - obj.led.x)
             cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
                             (obj.led.x, obj.led.y), (255, 0, 255), 3, tipLength=0.3)
             cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
+            if len(unknown_objects) > 1:
+                obj = unknown_objects[user_bot_index]
+                user_bot = obj
+                m = cv2.moments(obj.contour)
+                chassis_x = int(m['m10']/m['m00'])
+                chassis_y = int(m['m01']/m['m00'])
+                user_bot.angle = atan2(obj.balloon.y - chassis_y, obj.balloon.x - chassis_x)
+                cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
+                                (chassis_x, chassis_y), (255, 0, 255), 3, tipLength=0.3)
+                cv2.rectangle(image, obj.p1, obj.p2, (0, 255, 0), 1)
             self.save_image(image, "balloon")
-        return largest_object
+        return auto_bot, user_bot
 
     def save_image(self, image, name):
         img_name = os.path.join(self.image_dir_path, str(self.frame_number)+name+".jpg")
@@ -179,10 +194,10 @@ class Tracking():
                 else:
                     frame_diff = cv2.absdiff(frame, BASELINE)
                     abs_diff = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
-                    self.robot_one = self.find_robot_position(frame, abs_diff)
+                    self.auto_bot, self.user_bot = self.find_robot_position(frame, abs_diff)
                     frame_name = "frame"
                     diff_name = "diff"
-                    if self.robot_one.area:
+                    if self.auto_bot.area:
 #                        print ("object found, x: %s,  y: %s, area: %s, angle: %.2f" % 
  #                               (self.robot_one.x , self.robot_one.y, self.robot_one.area, self.robot_one.angle*60))
                         frame_name = "frameF"
