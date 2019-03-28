@@ -82,6 +82,8 @@ def auto(comms):
     GO_WILD_PROBABILITY = 0.01 if not tracking.auto_bot.area else 0.0003
     GO_WILD_TIME = 0.5
     if random.random() < GO_WILD_PROBABILITY:
+        power_left, power_right = random.choice((-RAND_SPEED, RAND_SPEED)), random.choice((-RAND_SPEED, RAND_SPEED))
+        comms.send_packet(State.AUTO.value, Colour.YELLOW.value, power_left, power_right)
         print("GOING  WIIILLLLLD!!")
         sleep(GO_WILD_TIME)
 
