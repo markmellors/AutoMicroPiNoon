@@ -1,7 +1,7 @@
 from flask import Flask, render_template, Response
 from camera import VideoCamera
 import time
-import threading
+#import threading
 
 class Frame_holder():
     def __init__(self):
@@ -14,9 +14,7 @@ class Frame_holder():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + self.frame + b'\r\n\r\n')
 
-frame_holder = Frame_holder()
 
-import host
 app = Flask(__name__)
 
 @app.route('/')
@@ -36,12 +34,18 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+frame_holder = Frame_holder()
+
+def update_video(frame):
+    ret, jpeg = cv2.imencode('.jpg', frame)
+    frame_holder.frame = jpeg.tobytes()
 
 def launch_video_feed():
     print("launched")
-    host_thread = threading.Thread(target=host.run)
-    host_thread.daemon = True
-    host_thread.start()
+
+#    host_thread = threading.Thread(target=host.run, args=(frame_holder))
+#    host_thread.daemon = True
+#    host_thread.start()
     app.run(host='0.0.0.0', debug=False)
 
 if __name__ == '__main__':

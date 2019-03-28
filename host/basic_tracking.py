@@ -7,7 +7,7 @@ import time
 import os
 from img_base_class import *
 from tendo.singleton import SingleInstance
-
+import main
 class VideoTimeExceeded(Exception):
     pass
 
@@ -39,12 +39,12 @@ def short_sleep(sleep_time):
   while time.clock() < start_time + sleep_time:
     pass
 
-class Tracking:
+class Tracking():
     def __init__(self):
-#        image_server_thread = threading.Thread(target=main.launch_video_feed())
-#        image_server_thread.daemon = True
-#        image_server_thread.start()
-#        print("server started")
+        image_server_thread = threading.Thread(target=main.launch_video_feed())
+        image_server_thread.daemon = True
+        image_server_thread.start()
+        print("server started")
         self.camera = picamera.PiCamera()
         self.camera.resolution = (320, 240)
         self.camera.framerate = 30
@@ -55,6 +55,7 @@ class Tracking:
         self.saving_images = False
         self.frame_number = 0
         self.PURGE = 50
+        self.video_frame = video_frame
         self.baselined = False
         TIME_OUT = 1000
         self.END_TIME = time.clock() + TIME_OUT
@@ -89,9 +90,7 @@ class Tracking:
     def save_image(self, image, name):
         img_name = os.path.join(self.image_dir_path, str(self.frame_number)+name+".jpg")
         if self.saving_images: cv2.imwrite(img_name, image)
-        if name == "balloon":
-            ret, jpeg = cv2.imencode('.jpg', image)
-            frame_holder.frame = jpeg.tobytes()
+        if name == "balloon": main.update_video(image)
 
 
     def find_objects(self, image, area_threshold):

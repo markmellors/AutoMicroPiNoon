@@ -84,12 +84,13 @@ def auto(comms):
 mode = State.STOPPED
 comms = Host_comms()
 planning = Heading()
-tracking = Tracking()
-tracking_thread = threading.Thread(target=tracking.run)
-tracking_thread.daemon = True
-tracking_thread.start()
-
 def run():
+
+    tracking = Tracking()
+    tracking_thread = threading.Thread(target=tracking.run)
+    tracking_thread.daemon = True
+    tracking_thread.start()
+
     while True:
         if not comms.connected:
             comms.connect()
