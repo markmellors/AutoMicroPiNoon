@@ -41,10 +41,9 @@ def short_sleep(sleep_time):
 
 class Tracking():
     def __init__(self):
-        image_server_thread = threading.Thread(target=main.launch_video_feed())
+        image_server_thread = threading.Thread(target=main.launch_video_feed)
         image_server_thread.daemon = True
         image_server_thread.start()
-        print("server started")
         self.camera = picamera.PiCamera()
         self.camera.resolution = (320, 240)
         self.camera.framerate = 30
@@ -55,7 +54,6 @@ class Tracking():
         self.saving_images = False
         self.frame_number = 0
         self.PURGE = 50
-        self.video_frame = video_frame
         self.baselined = False
         TIME_OUT = 1000
         self.END_TIME = time.clock() + TIME_OUT

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, Response
 from camera import VideoCamera
 import time
-#import threading
+import cv2
 
 class Frame_holder():
     def __init__(self):
@@ -11,6 +11,7 @@ class Frame_holder():
 
     def serve_frame(self):
         while True:
+            time.sleep(0.01)
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + self.frame + b'\r\n\r\n')
 
@@ -41,11 +42,6 @@ def update_video(frame):
     frame_holder.frame = jpeg.tobytes()
 
 def launch_video_feed():
-    print("launched")
-
-#    host_thread = threading.Thread(target=host.run, args=(frame_holder))
-#    host_thread.daemon = True
-#    host_thread.start()
     app.run(host='0.0.0.0', debug=False)
 
 if __name__ == '__main__':
