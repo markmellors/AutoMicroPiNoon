@@ -23,6 +23,7 @@ class Robot:
     balloon = None
     p1 = None
     p2 = None
+    dist = None
 
 class Marker():
     #class for storing the properties of detected robot markers
@@ -63,6 +64,25 @@ class Tracking():
         self.user_bot = Robot()
         print("setup complete, camera rolling but stabilising first")
 
+    def calc_ufo_distance(self, image, ufo, target):
+        SHADOW_DIST_K = -0.01   #max theoretical dist is ~760, max in practice is?. more diff better
+        TRANSLATION_K = 0.1  #theoretical max dist is ~400, typical will be 100. less diff better
+        LED_K = 0.1 #theoretical max is 760, typical will be 300 for opponent, 400 for shadow. less diff better
+        shadow_rgb = 60, 10, 140
+        ufo_rgb_range = colour_of_contour(image, ufo.contour) #returns 6 values, rgb, 1 S.D. above and below mean 
+        ufo_upper_rgb = ufo_rgb_range[1] #takes upper S.D. values
+        ufo_rgb = ufo_upper_rgb[0][0], ufo_upper_rgb[1][0], ufo_upper_rgb[2][0] #converts single element arrays to values
+        shadow_dist = cv2.norm(ufo_rgb, shadow_rgb)
+        if target.area:
+            trans_dist = cv2.norm((ufo.x, ufo.y),(target.x, target.y))
+            led_dist = cv2.norm(ufo.led.hsv, target.led.hsv)
+        else:
+            trans_dist = 100 #no previous position, so use average
+            nominal_led_value = 125, 1, 255
+            ufo_led = 1.0*ufo.led.hsv[0], 1.0*ufo.led.hsv[1], 1.0*ufo.led.hsv[2]
+            led_dist = cv2.norm(ufo_led, nominal_led_value)
+        weighted_distance = SHADOW_DIST_K * shadow_dist + TRANSLATION_K * trans_dist + LED_K * led_dist
+        return weighted_distance
 
     def find_robot_position(self, image, abs_diff):
         CHANGE_THRESHOLD = 30
@@ -73,6 +93,8 @@ class Tracking():
         brightest_led, largest_opponent = 0, 0
         for num, ufo in enumerate(unknown_objects, start =0):
             ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
+            distance_from_auto_bot = self.calc_ufo_distance(image, ufo, self.auto_bot)
+            print (distance_from_auto_bot)
             if ufo.led.hsv[2] > brightest_led:
                 auto_bot_index = num
                 brightest_led = ufo.led.hsv[2]
