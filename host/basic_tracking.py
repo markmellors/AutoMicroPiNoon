@@ -47,7 +47,7 @@ class Tracking():
         self.camera = picamera.PiCamera()
         self.camera.resolution = (320, 240)
         self.camera.framerate = 30
-        self.camera.exposure_compensation = -2
+        self.camera.exposure_compensation = -16
         self.FRAME_TIME = 1.0 / self.camera.framerate
         self.camera.iso = 800
         self.video = picamera.array.PiRGBArray(self.camera)
@@ -65,14 +65,14 @@ class Tracking():
 
 
     def find_robot_position(self, image, abs_diff):
-        CHANGE_THRESHOLD = 20
+        CHANGE_THRESHOLD = 45
         MIN_AREA = 300
         largest_object = Robot()
         mask = cv2.inRange(abs_diff, CHANGE_THRESHOLD, 255)
-        MORPH_SIZE = 3
-        kernel = np.ones((MORPH_SIZE,MORPH_SIZE),np.uint8) 
-        opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        unknown_objects = self.find_objects(opening, MIN_AREA)
+#        MORPH_SIZE = 3
+#        kernel = np.ones((MORPH_SIZE,MORPH_SIZE),np.uint8) 
+#        opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        unknown_objects = self.find_objects(mask, MIN_AREA) #opening, MIN_AREA)
         for ufo in unknown_objects:
             ufo.balloon, ufo.led, ufo.p1, ufo.p2 = self.find_markers(image, ufo.contour)
         if len(unknown_objects) > 0:
@@ -125,7 +125,7 @@ class Tracking():
          balloon.hsv = hsv_image[balloon.y, balloon.x]
          balloon.x += x_offset
          balloon.y += y_offset
-         LED_BLUR_SIZE = 5 #must be odd
+         LED_BLUR_SIZE = 3 #must be odd
          v_blurred = cv2.GaussianBlur(v_crop, (LED_BLUR_SIZE, LED_BLUR_SIZE), 0) #blur value channel
          min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(v_blurred) #find brightest and darkest spots again
          led = Marker(max_loc) # led assumed to be brightest spot within contour
@@ -137,7 +137,7 @@ class Tracking():
 
     def run(self):
         try:
-            for frame_buf in self.camera.capture_continuous(self.video, format ="rgb", use_video_port=True):
+            for frame_buf in self.camera.capture_continuous(self.video, format ="bgr", use_video_port=True):
                 if time.clock() > self.END_TIME:
                     raise VideoTimeExceeded("Max time exceeded")
                 frame = (frame_buf.array)

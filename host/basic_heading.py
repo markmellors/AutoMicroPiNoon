@@ -32,7 +32,7 @@ class Heading:
             speed = 0
             steering = 0
         self.update_last_properties(current_x, current_y, current_heading)
-        print("%s, %s, %s, %s, %s" %(current_x, current_y, current_heading, bearing_to_target, distance_to_target))
+#        print("%s, %s, %s, %s, %s" %(current_x, current_y, current_heading, bearing_to_target, distance_to_target))
         return speed, steering
 
     def update_last_properties(self, x, y, heading):
