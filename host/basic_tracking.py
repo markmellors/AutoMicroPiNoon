@@ -135,10 +135,25 @@ class Tracking():
 #         print ("balloon colour is: %s, led colour: %s" % (balloon.hsv, led.hsv))
          return balloon, led, (x_offset, y_offset), (x_max, y_max)
 
-    def update_baseline(self, current_baseline, latest_image):
-        MERGE_FRACTION = 0.003
+    def update_baseline(self, current_baseline, latest_image, diff):
+        MERGE_FRACTION = 0.01
         KEEP_FRACTION = 1 - MERGE_FRACTION
-        return cv2.addWeighted(current_baseline, KEEP_FRACTION, latest_image, MERGE_FRACTION, 0)
+        CHANGE_THRESHOLD = 15  #think this should be more discriminating than the object detection
+        mask = cv2.inRange(diff, 0, CHANGE_THRESHOLD)
+        locs = np.where(mask != 0) # Get the non-zero mask locations
+        modified_image = latest_image.copy()
+        if len(latest_image.shape) == 3 and len(current_baseline.shape) != 3:
+            modified_image[locs[0], locs[1]] = current_baseline[locs[0], locs[1], None]
+
+        # Case #2 - Both images are colour or grayscale
+        elif (len(latest_image.shape) == 3 and len(current_baseline.shape) == 3) or \
+           (len(latest_image.shape) == 1 and len(current_baseline.shape) == 1):
+            modified_image[locs[0], locs[1]] = current_baseline[locs[0], locs[1]]
+        # Otherwise, we can't do this
+        else:
+            raise Exception("Incompatible input and output dimensions")
+
+        return cv2.addWeighted(current_baseline, KEEP_FRACTION, modified_image, MERGE_FRACTION, 0)
 
     def run(self):
         try:
@@ -175,7 +190,7 @@ class Tracking():
                     else:
                         self.save_image(frame, frame_name)
                     self.save_image(frame_diff, diff_name)
-                    BASELINE =  self.update_baseline(BASELINE, frame)
+                    BASELINE =  self.update_baseline(BASELINE, frame, abs_diff)
                 self.frame_number += 1
 
         except (KeyboardInterrupt, VideoTimeExceeded) as exc:
