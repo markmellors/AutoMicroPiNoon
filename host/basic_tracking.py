@@ -75,6 +75,7 @@ class Tracking():
             ufo_rgb = ufo_upper_rgb[0][0], ufo_upper_rgb[1][0], ufo_upper_rgb[2][0] #converts single element arrays to values
         except:
             print("weird index error:")
+            print(ufo_rgb_range)
             print(ufo_upper_rgb)
             ufo_rgb = 120, 180, 150 
         shadow_dist = cv2.norm(ufo_rgb, shadow_rgb)
@@ -120,13 +121,13 @@ class Tracking():
                         closest_to_user_bot = dist_to_user_bot
                 obj = unknown_objects[user_bot_index]
                 user_bot = obj
-                m = cv2.moments(obj.contour)
-                chassis_x = int(m['m10']/m['m00'])
-                chassis_y = int(m['m01']/m['m00'])
-                user_bot.angle = atan2(obj.balloon.y - chassis_y, obj.balloon.x - chassis_x)
+                user_bot.angle = atan2(obj.balloon.y - obj.y, obj.balloon.x - obj.x)
                 cv2.arrowedLine(image, (obj.balloon.x, obj.balloon.y),
-                                (chassis_x, chassis_y), (255, 0, 0), 3, tipLength=0.3)
+                                (obj.x, obj.y), (255, 0, 0), 3, tipLength=0.3)
                 cv2.rectangle(image, obj.p1, obj.p2, (0, 0, 255), 1)
+                target_x = obj.x + int(15*cos(user_bot.angle))
+                target_y = obj.y + int(15*sin(user_bot.angle))
+                cv2.circle(image, (target_x, target_y), 4, (0, 0, 255), 1)
             self.save_image(image, "balloon")
         return auto_bot, user_bot
 

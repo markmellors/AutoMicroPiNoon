@@ -13,7 +13,7 @@ class Heading:
         self.w = 0
         self.target_v = 0
 
-    def path_planning(self, current_x, current_y, current_heading, target_x, target_y):
+    def path_planning(self, current_x, current_y, current_heading, target_x, target_y, user_bot_heading):
         """simple routine to head to a target position"""
         if not target_x: #if no target spotted, use last times values
             if not self.last_time:
@@ -21,6 +21,9 @@ class Heading:
             else:
                 target_x = 0.01*70 + 0.99*self.last_target_x
                 target_y = 0.01*70 + 0.99*self.last_target_y
+        else:
+            target_x = target_x + 15 * math.cos(user_bot_heading)
+            target_y = target_y + 15 * math.sin(user_bot_heading)
         if self.last_time:
             self.v = math.sqrt((current_x-self.last_x)**2+(current_y-self.last_y)**2)
             self.w = (current_heading - self.last_heading)/(time.clock() - self.last_time)

@@ -76,7 +76,7 @@ def auto(comms):
             target_x, target_y = tracking.user_bot.x, tracking.user_bot.y
         else:
             target_x, target_y = None, None
-        speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y)
+        speed, turning = planning.path_planning(current_x, current_y, current_heading, target_x, target_y, tracking.user_bot.angle)
         power_left, power_right = steering(turning, speed)
     comms.send_packet(State.AUTO.value, Colour.GREEN.value, power_left, power_right)
     GO_WILD_PROBABILITY = 0.01 if not tracking.auto_bot.area else 0.0003
