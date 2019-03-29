@@ -19,8 +19,8 @@ class Heading:
             if not self.last_time:
                 target_x, target_y = 70, 70
             else:
-                target_x = 0.01*70 + 0.99*self.last_target_x
-                target_y = 0.01*70 + 0.99*self.last_target_y
+                target_x = 0.01*120 + 0.99*self.last_target_x
+                target_y = 0.01*120 + 0.99*self.last_target_y
         else:
             target_x = target_x + 15 * math.cos(user_bot_heading)
             target_y = target_y + 15 * math.sin(user_bot_heading)
@@ -31,7 +31,7 @@ class Heading:
                 self.target_v = math.sqrt((target_x-self.last_target_x)**2+(target_y-self.last_target_y)**2)
         heading_offset = 0
         steering_p = 0.9
-        steering_d = -0.006
+        steering_d = -0.01
         speed_p = 0.01  #was 0.005 for square
         bearing_to_target = math.atan2((current_y-target_y) , (current_x-target_x))
         distance_to_target = math.sqrt((current_x-target_x)**2+(current_y-target_y)**2)

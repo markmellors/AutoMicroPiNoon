@@ -211,7 +211,7 @@ class Tracking():
                 self.video.truncate(0)
                 # Our operations on the frame come here
                 left_crop = 0 #50
-                right_crop = 280 #250
+                right_crop = 320 #250
                 bottom_crop = 0
                 top_crop =  240 #210
                 frame = frame[bottom_crop:top_crop, left_crop:right_crop]
